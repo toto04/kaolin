@@ -1,6 +1,6 @@
 use crate::{
     commands::RenderCommand,
-    elements::flexbox::FlexBox,
+    elements::{flexbox::FlexBox, text::TextConfig},
     fixed,
     style::{
         FlexStyle, flex_style,
@@ -10,40 +10,46 @@ use crate::{
 
 mod scope;
 
+pub type MeasureTextFn = fn(&str, &TextConfig) -> (f32, f32);
+
 pub struct Kaolin {
-    width: i32,
-    height: i32,
-    measure_text: fn(&str) -> (i32, i32),
+    width: f32,
+    height: f32,
+    measure_text: MeasureTextFn,
+    root_ref: Option<FlexBox>,
 }
 
 impl Kaolin {
-    pub fn new(window_dimensions: (i32, i32), measure_text: fn(&str) -> (i32, i32)) -> Self {
+    pub fn new(window_dimensions: (i32, i32), measure_text: MeasureTextFn) -> Self {
         let (width, height) = window_dimensions;
         Kaolin {
-            width,
-            height,
+            width: width as f32,
+            height: height as f32,
             measure_text,
+            root_ref: None,
         }
     }
 
     pub fn draw(
-        &self,
-        drawing_fn: fn(scope::KaolinScope<'_>) -> scope::KaolinScope<'_>,
+        &mut self,
+        drawing_fn: fn(scope::KaolinScope) -> scope::KaolinScope,
     ) -> Vec<RenderCommand> {
-        let mut flex = FlexBox::new(flex_style! {
+        let flex = FlexBox::new(flex_style! {
             sizing: BoxSizing {
-                width: fixed!(self.width as f32),
-                height: fixed!(self.height as f32),
+                width: fixed!(self.width),
+                height: fixed!(self.height),
             }
         });
-        let mut scope = scope::KaolinScope::new(flex);
+        let mut scope = scope::KaolinScope::new(flex, self.measure_text);
         scope = drawing_fn(scope);
 
-        flex = scope.extract();
+        self.root_ref = Some(scope.extract());
+        let flex = self.root_ref.as_mut().unwrap();
+        flex.grow_children_width(self.width);
+        flex.grow_children_height(self.height);
+        flex.position_children((0.0, self.width, 0.0, self.height));
 
-        flex.grow_children_width(self.width as f32);
-        // flex.
-
-        Vec::new() // Here you would collect the commands from the scope
+        let commands = Vec::new();
+        flex.render_all(commands)
     }
 }

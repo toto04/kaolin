@@ -8,6 +8,7 @@ derive_builder = "0.20.2"
 syn = {version = "2.0.104", features = ["full", "parsing"]}
 derive-declare = { path = "../derive-declare" }
 raylib = "5.5.1"
+unicode-segmentation = "1.12.0"
 
 [dependencies.uuid]
 version = "1.17.0"

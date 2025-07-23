@@ -95,7 +95,7 @@ pub enum Sizing {
 impl From<Sizing> for SizingDimensions {
     fn from(sizing: Sizing) -> Self {
         match sizing {
-            Sizing::Default => SizingDimensions::default(),
+            Sizing::Default => SizingDimensions::default(), // is actually just FIT with no limits
             Sizing::Fit { min, max } => SizingDimensions {
                 min: min.unwrap_or(0.0),
                 preferred: PreferredSize::Fixed(min.unwrap_or(0.0)), // prefers to stay at the min i guess

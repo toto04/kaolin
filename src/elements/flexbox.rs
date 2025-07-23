@@ -1,16 +1,20 @@
 use std::ops::Add;
 
 use crate::{
+    commands::RenderCommand,
     elements::{KaolinElement, KaolinNode, KaolinNodes},
-    style::{FlexStyle, layout::Direction},
+    style::{
+        FlexStyle,
+        layout::{Alignment, Direction, Justification},
+    },
 };
 
-pub struct FlexBox<'a> {
+pub struct FlexBox {
     pub style: FlexStyle,
-    children: KaolinNodes<'a>,
+    children: KaolinNodes,
 }
 
-impl<'a> FlexBox<'a> {
+impl FlexBox {
     pub fn new(style: FlexStyle) -> Self {
         FlexBox {
             style,
@@ -18,7 +22,7 @@ impl<'a> FlexBox<'a> {
         }
     }
 
-    pub fn fit_to_width(&self) -> f32 {
+    pub fn fit_width_to_children(&self) -> f32 {
         match self.style.layout.direction {
             Direction::LeftToRight | Direction::RightToLeft => {
                 let gaps = self.children.len() - 1;
@@ -36,45 +40,72 @@ impl<'a> FlexBox<'a> {
         match self.style.layout.direction {
             Direction::LeftToRight | Direction::RightToLeft => {
                 let cum_width = self.children.get_cumulative_width(); // lmao
-                let mut growable_children = self.children.get_growable_children_w();
                 let mut remaining = current_width - self.style.padding.x() - cum_width;
 
-                while remaining > 0.0 && !growable_children.is_empty() {
-                    let mut total_grow = 0.0;
-                    let (smallest, second_smallest) =
-                        KaolinNodes::get_smallest_widths(&growable_children);
+                if remaining > 0.0 {
+                    // grow
+                    let mut growable_children = self.children.get_growable_children_w();
+                    while remaining > 0.0 && !growable_children.is_empty() {
+                        let mut total_growth = 0.0;
+                        let (smallest, second_smallest) =
+                            KaolinNodes::get_smallest_widths(&growable_children);
 
-                    let growing = growable_children
-                        .iter_mut()
-                        .filter(|c| c.current_width == smallest)
-                        .collect::<Vec<_>>();
+                        let growing = growable_children
+                            .iter_mut()
+                            .filter(|c| c.current_width == smallest)
+                            .collect::<Vec<_>>();
 
-                    let total_factor = growing.iter().map(|c| c.get_grow_factor().0).sum::<f32>();
-
-                    if total_factor > 0.0 {
-                        let grow_amount = remaining.min(second_smallest - smallest) / total_factor;
-                        for child in growing {
-                            let factor = child.get_grow_factor().0;
-                            let grow = child.grow_width(grow_amount * factor);
-                            total_grow += grow;
+                        let total_factor =
+                            growing.iter().map(|c| c.get_grow_factor().0).sum::<f32>();
+                        if total_factor > 0.0 {
+                            let grow_amount =
+                                remaining.min(second_smallest - smallest) / total_factor;
+                            for child in growing {
+                                let factor = child.get_grow_factor().0;
+                                let growth = child.grow_width(grow_amount * factor);
+                                total_growth += growth;
+                            }
+                        } else {
+                            break;
                         }
+                        remaining -= total_growth;
+                        growable_children.retain(|c| c.growable_width);
                     }
+                } else if remaining < 0.0 {
+                    // shrink
+                    let mut shrinkable_children = self.children.get_shrinkable_children();
+                    while remaining < 0.0 && !shrinkable_children.is_empty() {
+                        let mut total_shrink = 0.0;
+                        let (biggest, second_biggest) =
+                            KaolinNodes::get_biggest_widths(&shrinkable_children);
 
-                    remaining -= total_grow;
+                        let shrinking = shrinkable_children
+                            .iter_mut()
+                            .filter(|c| c.current_width == biggest)
+                            .collect::<Vec<_>>();
 
-                    growable_children.retain(|c| c.growable_width);
+                        let len = shrinking.len() as f32;
+                        let shrink_amount = -remaining.abs().min(biggest - second_biggest) / len;
+                        for child in shrinking {
+                            let shrink = child.grow_width(shrink_amount);
+                            total_shrink += shrink;
+                        }
+
+                        remaining -= total_shrink;
+                        shrinkable_children.retain(|c| c.shrinkable);
+                    }
                 }
             }
             Direction::TopToBottom | Direction::BottomToTop => {
-                self.children
-                    .get_growable_children_w()
-                    .iter_mut()
-                    .for_each(|child| {
-                        let remaining =
-                            current_width - child.current_width - self.style.padding.x();
+                self.children.nodes().for_each(|child| {
+                    let remaining = current_width - child.current_width - self.style.padding.x();
+                    if (remaining > 0.0 && child.growable_width)
+                        || (remaining < 0.0 && child.shrinkable)
+                    {
                         child.grow_width(remaining);
-                        child.growable_width = false; // Once grown, they can't grow anymore
-                    });
+                    }
+                    child.growable_width = false; // Once grown, they can't grow anymore
+                });
             }
         }
         self.children.grow_w();
@@ -103,7 +134,123 @@ impl<'a> FlexBox<'a> {
         current_height
     }
 
-    pub fn add_child(&mut self, child: KaolinElement<'a>) {
+    pub fn grow_children_height(&mut self, current_height: f32) {
+        match self.style.layout.direction {
+            Direction::LeftToRight | Direction::RightToLeft => {
+                self.children
+                    .get_growable_children_h()
+                    .iter_mut()
+                    .for_each(|child| {
+                        if child.growable_height {
+                            child.grow_height(current_height - child.current_height);
+                        }
+                    });
+            }
+            Direction::TopToBottom | Direction::BottomToTop => {
+                let cum_height = self.children.get_cumulative_height(); // lmao
+                let mut remaining = current_height - self.style.padding.y() - cum_height;
+                let mut growable_children = self.children.get_growable_children_h();
+
+                while remaining > 0.0 && !growable_children.is_empty() {
+                    let mut total_grow = 0.0;
+                    let (smallest, second_smallest) =
+                        KaolinNodes::get_smallest_heights(&growable_children);
+
+                    let growing = growable_children
+                        .iter_mut()
+                        .filter(|c| c.current_width == smallest)
+                        .collect::<Vec<_>>();
+
+                    let total_factor = growing.iter().map(|c| c.get_grow_factor().1).sum::<f32>();
+                    if total_factor > 0.0 {
+                        let grow_amount = remaining.min(second_smallest - smallest) / total_factor;
+                        for child in growing {
+                            let factor = child.get_grow_factor().1;
+                            let grow = child.grow_height(grow_amount * factor);
+                            total_grow += grow;
+                        }
+                    }
+                    remaining -= total_grow;
+                    growable_children.retain(|c| c.growable_height);
+                }
+            }
+        }
+        self.children.grow_h();
+    }
+
+    pub fn position_children(&mut self, offsets: (f32, f32, f32, f32)) {
+        let (left, right, top, bottom) = offsets;
+        match self.style.layout.direction {
+            Direction::LeftToRight | Direction::RightToLeft => {
+                let cum_width = self.children.get_cumulative_width();
+                let mut x = match self.style.layout.justification {
+                    Justification::Start
+                    | Justification::SpaceBetween
+                    | Justification::SpaceAround => left + self.style.padding.left,
+                    Justification::End => right - left - cum_width - self.style.padding.right,
+                    Justification::Center => {
+                        (right - left - self.style.padding.x() - cum_width) / 2.0
+                            + left
+                            + self.style.padding.left
+                    }
+                };
+
+                for child in &mut self.children.nodes {
+                    let y = match self.style.layout.alignment {
+                        Alignment::Start | Alignment::Stretch => top + self.style.padding.top,
+                        Alignment::Center => {
+                            (bottom - top - self.style.padding.y() - child.current_height) / 2.0
+                                + top
+                                + self.style.padding.top
+                        }
+                        Alignment::End => bottom - self.style.padding.bottom - child.current_height,
+                    };
+                    child.set_position(x, y);
+                    x += child.current_width + self.style.layout.gap;
+                }
+            }
+            Direction::TopToBottom | Direction::BottomToTop => {
+                let cum_height = self.children.get_cumulative_height();
+                let mut y = match self.style.layout.justification {
+                    Justification::Start
+                    | Justification::SpaceBetween
+                    | Justification::SpaceAround => top + self.style.padding.top,
+                    Justification::End => bottom - top - cum_height - self.style.padding.bottom,
+                    Justification::Center => {
+                        (bottom - top - self.style.padding.y() - cum_height) / 2.0
+                            + top
+                            + self.style.padding.top
+                    }
+                };
+
+                for child in &mut self.children.nodes {
+                    let x = match self.style.layout.alignment {
+                        Alignment::Start | Alignment::Stretch => left + self.style.padding.left,
+                        Alignment::Center => {
+                            (right - left - self.style.padding.x() - child.current_width) / 2.0
+                                + left
+                                + self.style.padding.left
+                        }
+                        Alignment::End => right - self.style.padding.right - child.current_width,
+                    };
+                    child.set_position(x, y);
+                    y += child.current_height + self.style.layout.gap;
+                }
+            }
+        }
+    }
+
+    pub fn add_child(&mut self, child: KaolinElement) {
         self.children.push(KaolinNode::new(child, None));
+    }
+
+    pub fn render_all<'a>(
+        &'a self,
+        mut commands: Vec<RenderCommand<'a>>,
+    ) -> Vec<RenderCommand<'a>> {
+        for child in &self.children.nodes {
+            commands.extend(child.render());
+        }
+        commands
     }
 }

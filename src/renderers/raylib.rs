@@ -43,19 +43,14 @@ impl KaolinRenderer for RaylibRenderer {
                     width,
                     height,
                     color,
+                    ..
                 } => {
                     let color = raylib::color::Color::from(color.rgba());
                     d.draw_rectangle(x, y, width, height, color);
                 }
-                RenderCommand::DrawText {
-                    text,
-                    x,
-                    y,
-                    font_size,
-                    color,
-                } => {
-                    let color = raylib::color::Color::from(color.rgba());
-                    d.draw_text(text, x, y, font_size as i32, color);
+                RenderCommand::DrawText { text, x, y, config } => {
+                    let color = raylib::color::Color::from(config.color.rgba());
+                    d.draw_text(text, x, y, config.font_size as i32, color);
                 }
             }
         }
