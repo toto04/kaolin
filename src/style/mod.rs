@@ -3,14 +3,11 @@ pub mod layout;
 pub mod padding;
 pub mod sizing;
 
-use derive_declare::Declare;
-
 use crate::style::colors::*;
 use crate::style::layout::Layout;
 use crate::style::padding::Padding;
 use crate::style::sizing::BoxSizing;
 
-#[derive(Declare)]
 pub struct FlexStyle {
     pub color: Color,
     pub background_color: Color,
@@ -31,4 +28,47 @@ impl Default for FlexStyle {
             corner_radius: 0.0,
         }
     }
+}
+
+#[macro_export]
+macro_rules! flex_style {
+    () => {
+        FlexStyle::default()
+    };
+    ($($key:ident : $value:expr),* $(,)?) => {
+        FlexStyle {
+            $( $key: $value, )*
+            ..FlexStyle::default()
+        }
+    };
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct TextConfig {
+    pub font_id: u32,
+    pub font_size: f32,
+    pub color: Color,
+}
+
+impl Default for TextConfig {
+    fn default() -> Self {
+        TextConfig {
+            font_id: 0,
+            font_size: 16.0,
+            color: Color::default(),
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! text_config {
+    () => {
+        kaolin::style::TextConfig::default()
+    };
+    ($($key:ident : $value:expr),* $(,)?) => {
+        kaolin::style::TextConfig {
+            $( $key: $value, )*
+            ..kaolin::style::TextConfig::default()
+        }
+    };
 }

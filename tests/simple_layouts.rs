@@ -1,0 +1,141 @@
+use std::rc::Rc;
+
+use kaolin::{
+    commands::RenderCommand,
+    fixed, flex_style, grow,
+    kaolin::Kaolin,
+    layout,
+    style::{
+        FlexStyle, TextConfig,
+        colors::Colors,
+        layout::{Alignment, Justification},
+        sizing::BoxSizing,
+    },
+};
+
+fn measure_text(text: &str, _config: &TextConfig) -> (f32, f32) {
+    (text.len() as f32 * 10.0, 20.0)
+}
+
+#[test]
+fn simple_layout() {
+    let mut kaolin = Kaolin::new((800, 600), measure_text);
+    let commands = kaolin.draw(|k| {
+        k.with(
+            flex_style! {
+              sizing: BoxSizing {
+                  width: grow!(1.0),
+                  height: grow!(1.0),
+              },
+              layout: layout! {
+                  justification: Justification::Center,
+                  alignment: Alignment::Center,
+              }
+            },
+            |k| k.text("Hello, Kaolin!", TextConfig::default()),
+        )
+    });
+
+    println!("{commands:?}");
+    assert_eq!(commands.len(), 2);
+    assert_eq!(
+        commands.collect::<Vec<_>>(),
+        vec![
+            RenderCommand::DrawRectangle {
+                id: "".to_string(), // ID is not used in this context
+                color: Colors::Transparent.into(),
+                x: 0,
+                y: 0,
+                width: 800,
+                height: 600
+            },
+            RenderCommand::DrawText {
+                config: Rc::new(TextConfig::default()),
+                text: "Hello, Kaolin!".to_string(),
+                x: (800 - 140) / 2, // Assuming 10px per character width
+                y: (600 - 20) / 2,  // Assuming 20px per line height
+            },
+        ]
+    );
+}
+
+#[test]
+fn double_growth() {
+    let mut kaolin = Kaolin::new((800, 600), measure_text);
+    let commands = kaolin.draw(|k| {
+        k.with(
+            flex_style! {
+              sizing: BoxSizing {
+                width: grow!(1.0),
+                height: grow!(1.0),
+              }
+            },
+            |k| k,
+        )
+        .with(
+            flex_style! {
+                sizing: BoxSizing {
+                    width: grow!(3.0),
+                    height: fixed!(200.0),
+                }
+            },
+            |k| k,
+        )
+    });
+
+    println!("{commands:?}");
+    assert_eq!(commands.len(), 2);
+    assert_eq!(
+        commands.collect::<Vec<_>>(),
+        vec![
+            RenderCommand::DrawRectangle {
+                id: "".to_string(), // ID is not used in this context
+                color: Colors::Transparent.into(),
+                x: 0,
+                y: 0,
+                width: 200,
+                height: 600
+            },
+            RenderCommand::DrawRectangle {
+                id: "".to_string(), // ID is not used in this context
+                color: Colors::Transparent.into(),
+                x: 200,
+                y: 0,
+                width: 600,
+                height: 200
+            },
+        ]
+    );
+}
+
+#[test]
+fn fit_sizing() {
+    let mut kaolin = Kaolin::new((800, 600), measure_text);
+    let commands = kaolin.draw(|k| {
+        k.with(flex_style! {}, |k| {
+            k.text("Hello, Kaolin!", TextConfig::default())
+        })
+    });
+
+    println!("{commands:?}");
+    assert_eq!(commands.len(), 2);
+    assert_eq!(
+        commands.collect::<Vec<_>>(),
+        vec![
+            RenderCommand::DrawRectangle {
+                id: "".to_string(), // ID is not used in this context
+                color: Colors::Transparent.into(),
+                x: 0,
+                y: 0,
+                width: 140,
+                height: 20
+            },
+            RenderCommand::DrawText {
+                config: Rc::new(TextConfig::default()),
+                text: "Hello, Kaolin!".to_string(),
+                x: 0,
+                y: 0
+            }
+        ]
+    );
+}

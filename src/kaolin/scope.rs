@@ -1,34 +1,31 @@
 use crate::{
-    elements::{
-        KaolinElement,
-        flexbox::FlexBox,
-        text::{TextConfig, TextElement},
-    },
+    elements::{KaolinElement, flexbox::FlexBox, text::TextElement},
     kaolin::MeasureTextFn,
-    style::FlexStyle,
+    style::{FlexStyle, TextConfig},
 };
 
 // pub type DrawingFn = fn(KaolinScope<'_>);
 
-pub struct KaolinScope {
-    flex: FlexBox,
-    measure_text: MeasureTextFn,
+pub struct KaolinScope<'frame> {
+    flex: FlexBox<'frame>,
+    pub(crate) measure_text: &'frame MeasureTextFn<'frame>,
 }
 
-impl KaolinScope {
-    pub fn new(flex: FlexBox, measure_text: MeasureTextFn) -> Self {
+impl<'frame> KaolinScope<'frame> {
+    pub fn new(flex: FlexBox<'frame>, measure_text: &'frame MeasureTextFn<'frame>) -> Self {
         KaolinScope { flex, measure_text }
     }
 
     pub fn with(mut self, style: FlexStyle, contents: fn(KaolinScope) -> KaolinScope) -> Self {
         let child_flex = FlexBox::new(style);
         let child_scope = KaolinScope::new(child_flex, self.measure_text);
-        let child_flex = contents(child_scope).extract();
+        let modified_scope = contents(child_scope);
+        let child_flex = modified_scope.conclude();
         self.flex.add_child(KaolinElement::Flex(child_flex));
         self
     }
 
-    pub(super) fn extract(self) -> FlexBox {
+    pub(super) fn conclude(self) -> FlexBox<'frame> {
         self.flex
     }
 

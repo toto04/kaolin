@@ -1,39 +1,28 @@
+use std::rc::Rc;
+
 use unicode_segmentation::UnicodeSegmentation;
 
-use crate::{commands::RenderCommand, kaolin::MeasureTextFn, style::colors::Color};
+use crate::{commands::RenderCommand, style::TextConfig};
 
-#[derive(Debug, Clone, Copy)]
-pub struct TextConfig {
-    pub font_id: u32,
-    pub font_size: f32,
-    pub color: Color,
-}
-
-impl Default for TextConfig {
-    fn default() -> Self {
-        TextConfig {
-            font_id: 0,
-            font_size: 16.0,
-            color: Color::default(),
-        }
-    }
-}
-
-pub struct TextElement {
+pub struct TextElement<'frame> {
     content: String,
-    config: TextConfig,
-    measure_text: MeasureTextFn,
+    config: Rc<TextConfig>,
     lines: Vec<(usize, usize)>, // (start, end) indices of lines in content
+    measure_text: &'frame dyn Fn(&str, &TextConfig) -> (f32, f32), // measure text function
 }
 
-impl TextElement {
-    pub fn new(content: &str, config: TextConfig, measure_text: MeasureTextFn) -> Self {
+impl<'frame> TextElement<'frame> {
+    pub fn new(
+        content: &str,
+        config: TextConfig,
+        measure_text: &'frame dyn Fn(&str, &TextConfig) -> (f32, f32),
+    ) -> Self {
         let lines = Vec::new();
         TextElement {
             content: content.to_string(),
-            config,
-            measure_text,
+            config: Rc::new(config),
             lines,
+            measure_text,
         }
     }
 
@@ -93,21 +82,20 @@ impl TextElement {
         total_height
     }
 
-    pub fn render<'a>(&'a self, x: f32, y: f32) -> Vec<RenderCommand<'a>> {
-        let mut commands = Vec::new();
+    pub fn render(&self, x: f32, y: f32) -> impl Iterator<Item = RenderCommand> {
         let mut current_y = y;
-        for line_indices in self.lines.iter() {
+        self.lines.iter().map(move |line_indices| {
             let (start, end) = *line_indices;
             let line = &self.content[start..end];
             let (_, height) = (self.measure_text)(line, &self.config);
-            commands.push(RenderCommand::DrawText {
-                text: line,
-                x: x as i32,
-                y: current_y as i32,
-                config: &self.config,
-            });
+            let y = current_y as i32;
             current_y += height;
-        }
-        commands
+            RenderCommand::DrawText {
+                text: line.to_string(),
+                x: x as i32,
+                y,
+                config: self.config.clone(),
+            }
+        })
     }
 }

@@ -1,7 +1,7 @@
 use std::ops::Add;
 
 use crate::{
-    commands::RenderCommand,
+    commands::{RenderCommand, RenderCommands},
     elements::{KaolinElement, KaolinNode, KaolinNodes},
     style::{
         FlexStyle,
@@ -9,12 +9,12 @@ use crate::{
     },
 };
 
-pub struct FlexBox {
+pub struct FlexBox<'frame> {
     pub style: FlexStyle,
-    children: KaolinNodes,
+    pub(crate) children: KaolinNodes<'frame>,
 }
 
-impl FlexBox {
+impl<'frame> FlexBox<'frame> {
     pub fn new(style: FlexStyle) -> Self {
         FlexBox {
             style,
@@ -25,7 +25,7 @@ impl FlexBox {
     pub fn fit_width_to_children(&self) -> f32 {
         match self.style.layout.direction {
             Direction::LeftToRight | Direction::RightToLeft => {
-                let gaps = self.children.len() - 1;
+                let gaps = self.children.gaps();
                 self.children.get_cumulative_width()
                     + self.style.padding.x()
                     + (gaps as f32) * self.style.layout.gap
@@ -39,8 +39,12 @@ impl FlexBox {
     pub fn grow_children_width(&mut self, current_width: f32) {
         match self.style.layout.direction {
             Direction::LeftToRight | Direction::RightToLeft => {
+                let gaps = self.children.gaps();
                 let cum_width = self.children.get_cumulative_width(); // lmao
-                let mut remaining = current_width - self.style.padding.x() - cum_width;
+                let mut remaining = current_width
+                    - self.style.padding.x()
+                    - cum_width
+                    - (gaps as f32) * self.style.layout.gap;
 
                 if remaining > 0.0 {
                     // grow
@@ -182,7 +186,8 @@ impl FlexBox {
         let (left, right, top, bottom) = offsets;
         match self.style.layout.direction {
             Direction::LeftToRight | Direction::RightToLeft => {
-                let cum_width = self.children.get_cumulative_width();
+                let cum_width = self.children.get_cumulative_width()
+                    + self.children.gaps() as f32 * self.style.layout.gap;
                 let mut x = match self.style.layout.justification {
                     Justification::Start
                     | Justification::SpaceBetween
@@ -240,17 +245,15 @@ impl FlexBox {
         }
     }
 
-    pub fn add_child(&mut self, child: KaolinElement) {
+    pub fn add_child(&mut self, child: KaolinElement<'frame>) {
         self.children.push(KaolinNode::new(child, None));
     }
 
-    pub fn render_all<'a>(
-        &'a self,
-        mut commands: Vec<RenderCommand<'a>>,
-    ) -> Vec<RenderCommand<'a>> {
-        for child in &self.children.nodes {
-            commands.extend(child.render());
-        }
-        commands
+    pub fn render(&self, self_command: RenderCommand) -> impl Iterator<Item = RenderCommand> {
+        std::iter::once(self_command).chain(self.children.render_nodes())
+    }
+
+    pub fn conclude(self) -> RenderCommands {
+        RenderCommands::new(self)
     }
 }

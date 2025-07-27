@@ -1,18 +1,20 @@
 use crate::style::layout::Direction;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum PreferredSize {
+    // gravitates towards a fixed size
     Fixed(f32),
+    // no fixed size, grows indefenetly with a factor
     Grow(f32),
 }
 
 impl Default for PreferredSize {
     fn default() -> Self {
-        PreferredSize::Fixed(0.0)
+        PreferredSize::Fixed(0.0) // gravitate to 0.0 for fit sizing
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct SizingDimensions {
     pub min: f32,                 // Minimum size
     pub preferred: PreferredSize, // Preferred size
@@ -142,14 +144,14 @@ macro_rules! fit {
 #[macro_export]
 macro_rules! fixed {
     ($size:expr) => {
-        Sizing::Fixed($size)
+        kaolin::style::sizing::Sizing::Fixed($size)
     };
 }
 
 #[macro_export]
 macro_rules! grow {
     ($factor:expr, $min:expr, $max:expr) => {
-        Sizing::Grow {
+        kaolin::style::sizing::Sizing::Grow {
             factor: Some($factor),
             min: Some($min),
             max: Some($max),
@@ -157,7 +159,7 @@ macro_rules! grow {
     };
 
     ($factor:expr) => {
-        Sizing::Grow {
+        kaolin::style::sizing::Sizing::Grow {
             factor: Some($factor),
             min: None,
             max: None,
@@ -165,7 +167,7 @@ macro_rules! grow {
     };
 
     () => {
-        Sizing::Grow {
+        kaolin::style::sizing::Sizing::Grow {
             factor: None,
             min: None,
             max: None,

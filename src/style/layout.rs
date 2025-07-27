@@ -33,3 +33,16 @@ pub struct Layout {
     pub justification: Justification,
     pub gap: f32, // Gap between items
 }
+
+#[macro_export]
+macro_rules! layout {
+    () => {
+        kaolin::style::layout::Layout::default()
+    };
+    ($($key:ident : $value:expr),* $(,)?) => {
+        kaolin::style::layout::Layout {
+            $( $key: $value, )*
+            ..kaolin::style::layout::Layout::default()
+        }
+    };
+}
