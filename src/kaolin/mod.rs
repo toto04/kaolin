@@ -8,10 +8,9 @@ use crate::{
     },
 };
 
-pub(crate) mod scope;
+pub mod scope;
 
-// #[]
-pub(crate) type MeasureTextFn<'frame> = Box<dyn Fn(&str, &TextConfig) -> (f32, f32) + 'frame>;
+pub type MeasureTextFn<'frame> = Box<dyn Fn(&str, &TextConfig) -> (f32, f32) + 'frame>;
 
 pub struct Kaolin<'frame> {
     width: f32,
