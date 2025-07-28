@@ -53,7 +53,7 @@ impl<'frame> RaylibRenderer<'frame> {
 }
 
 impl KaolinRenderer for RaylibRenderer<'_> {
-    fn draw(&mut self, drawing_fn: fn(KaolinScope) -> KaolinScope) {
+    fn draw(&self, drawing_fn: fn(KaolinScope) -> KaolinScope) {
         let commands = self.kaolin.draw(drawing_fn);
         let mut raylib = self.raylib.borrow_mut();
         let mut d = raylib.begin_drawing(&self.thread);

@@ -19,7 +19,7 @@ fn measure_text(text: &str, _config: &TextConfig) -> (f32, f32) {
 
 #[test]
 fn simple_layout() {
-    let mut kaolin = Kaolin::new((800, 600), measure_text);
+    let kaolin = Kaolin::new((800, 600), measure_text);
     let commands = kaolin.draw(|k| {
         k.with(
             flex_style! {
@@ -61,7 +61,7 @@ fn simple_layout() {
 
 #[test]
 fn double_growth() {
-    let mut kaolin = Kaolin::new((800, 600), measure_text);
+    let kaolin = Kaolin::new((800, 600), measure_text);
     let commands = kaolin.draw(|k| {
         k.with(
             flex_style! {
@@ -110,7 +110,7 @@ fn double_growth() {
 
 #[test]
 fn fit_sizing() {
-    let mut kaolin = Kaolin::new((800, 600), measure_text);
+    let kaolin = Kaolin::new((800, 600), measure_text);
     let commands = kaolin.draw(|k| {
         k.with(flex_style! {}, |k| {
             k.text("Hello, Kaolin!", TextConfig::default())

@@ -32,10 +32,7 @@ impl<'frame> Kaolin<'frame> {
         }
     }
 
-    pub fn draw(
-        &mut self,
-        drawing_fn: fn(scope::KaolinScope) -> scope::KaolinScope,
-    ) -> RenderCommands {
+    pub fn draw(&self, drawing_fn: fn(scope::KaolinScope) -> scope::KaolinScope) -> RenderCommands {
         let flex = FlexBox::new(flex_style! {
             sizing: BoxSizing {
                 width: Sizing::Fixed(self.width),
