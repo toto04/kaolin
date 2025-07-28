@@ -214,7 +214,6 @@ version = "0.1.0"
 dependencies = [
  "derive_builder",
  "raylib",
- "syn",
  "unicode-segmentation",
  "uuid",
 ]
