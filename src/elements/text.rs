@@ -2,20 +2,26 @@ use std::rc::Rc;
 
 use unicode_segmentation::UnicodeSegmentation;
 
-use crate::{commands::RenderCommand, style::TextConfig};
+use crate::{commands::RenderCommand, kaolin::MeasureTextFn, style::TextConfig};
 
-pub struct TextElement<'frame> {
+pub struct TextElement<'frame, Color>
+where
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+{
     content: String,
-    config: Rc<TextConfig>,
+    config: Rc<TextConfig<Color>>,
     lines: Vec<(usize, usize)>, // (start, end) indices of lines in content
-    measure_text: &'frame dyn Fn(&str, &TextConfig) -> (f32, f32), // measure text function
+    measure_text: &'frame MeasureTextFn<'frame, Color>, // measure text function
 }
 
-impl<'frame> TextElement<'frame> {
+impl<'frame, Color> TextElement<'frame, Color>
+where
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+{
     pub fn new(
         content: &str,
-        config: TextConfig,
-        measure_text: &'frame dyn Fn(&str, &TextConfig) -> (f32, f32),
+        config: TextConfig<Color>,
+        measure_text: &'frame MeasureTextFn<'frame, Color>,
     ) -> Self {
         let lines = Vec::new();
         TextElement {
@@ -82,7 +88,7 @@ impl<'frame> TextElement<'frame> {
         total_height
     }
 
-    pub fn render(&self, x: f32, y: f32) -> impl Iterator<Item = RenderCommand> {
+    pub fn render(&self, x: f32, y: f32) -> impl Iterator<Item = RenderCommand<Color>> {
         let mut current_y = y;
         self.lines.iter().map(move |line_indices| {
             let (start, end) = *line_indices;

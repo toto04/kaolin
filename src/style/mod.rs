@@ -1,14 +1,27 @@
-pub mod colors;
 pub mod layout;
 pub mod padding;
 pub mod sizing;
 
-use crate::style::colors::*;
 use crate::style::layout::Layout;
 use crate::style::padding::Padding;
 use crate::style::sizing::BoxSizing;
 
-pub struct FlexStyle {
+pub trait KaolinColor<Color>
+where
+    Color: Default + Copy + PartialEq,
+{
+    fn default_foreground_color() -> Color {
+        Color::default()
+    }
+    fn default_background_color() -> Color {
+        Color::default()
+    }
+}
+
+pub struct FlexStyle<Color>
+where
+    Color: Default + Copy + PartialEq + KaolinColor<Color>,
+{
     pub color: Color,
     pub background_color: Color,
     pub layout: Layout,
@@ -17,11 +30,14 @@ pub struct FlexStyle {
     pub corner_radius: f32, // Optional corner radius for rounded corners
 }
 
-impl Default for FlexStyle {
+impl<Color> Default for FlexStyle<Color>
+where
+    Color: Default + Copy + PartialEq + KaolinColor<Color>,
+{
     fn default() -> Self {
         FlexStyle {
-            color: Colors::Black.into(),
-            background_color: Colors::Transparent.into(),
+            color: Color::default_foreground_color(),
+            background_color: Color::default_background_color(),
             layout: Layout::default(),
             sizing: BoxSizing::default(),
             padding: Padding::default(),
@@ -44,18 +60,24 @@ macro_rules! flex_style {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct TextConfig {
+pub struct TextConfig<Color>
+where
+    Color: Default + Copy + PartialEq + KaolinColor<Color>,
+{
     pub font_id: u32,
     pub font_size: f32,
-    pub color: Color,
+    pub color: Option<Color>,
 }
 
-impl Default for TextConfig {
+impl<Color> Default for TextConfig<Color>
+where
+    Color: Default + Copy + PartialEq + KaolinColor<Color>,
+{
     fn default() -> Self {
         TextConfig {
             font_id: 0,
             font_size: 16.0,
-            color: Color::default(),
+            color: None,
         }
     }
 }

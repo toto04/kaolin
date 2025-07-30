@@ -9,13 +9,19 @@ use crate::{
     },
 };
 
-pub struct FlexBox<'frame> {
-    pub style: FlexStyle,
-    pub(crate) children: KaolinNodes<'frame>,
+pub struct FlexBox<'frame, Color>
+where
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+{
+    pub style: FlexStyle<Color>,
+    pub(crate) children: KaolinNodes<'frame, Color>,
 }
 
-impl<'frame> FlexBox<'frame> {
-    pub fn new(style: FlexStyle) -> Self {
+impl<'frame, Color> FlexBox<'frame, Color>
+where
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+{
+    pub fn new(style: FlexStyle<Color>) -> Self {
         FlexBox {
             style,
             children: KaolinNodes::new(),
@@ -245,15 +251,18 @@ impl<'frame> FlexBox<'frame> {
         }
     }
 
-    pub fn add_child(&mut self, child: KaolinElement<'frame>) {
+    pub fn add_child(&mut self, child: KaolinElement<'frame, Color>) {
         self.children.push(KaolinNode::new(child, None));
     }
 
-    pub fn render(&self, self_command: RenderCommand) -> impl Iterator<Item = RenderCommand> {
+    pub fn render(
+        &self,
+        self_command: RenderCommand<Color>,
+    ) -> impl Iterator<Item = RenderCommand<Color>> {
         std::iter::once(self_command).chain(self.children.render_nodes())
     }
 
-    pub fn conclude(self) -> RenderCommands {
+    pub fn conclude(self) -> RenderCommands<Color> {
         RenderCommands::new(self)
     }
 }

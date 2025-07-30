@@ -6,17 +6,30 @@ use crate::{
 
 // pub type DrawingFn = fn(KaolinScope<'_>);
 
-pub struct KaolinScope<'frame> {
-    flex: FlexBox<'frame>,
-    pub(crate) measure_text: &'frame MeasureTextFn<'frame>,
+pub struct KaolinScope<'frame, Color>
+where
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+{
+    flex: FlexBox<'frame, Color>,
+    pub(crate) measure_text: &'frame MeasureTextFn<'frame, Color>,
 }
 
-impl<'frame> KaolinScope<'frame> {
-    pub fn new(flex: FlexBox<'frame>, measure_text: &'frame MeasureTextFn<'frame>) -> Self {
+impl<'frame, Color> KaolinScope<'frame, Color>
+where
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+{
+    pub fn new(
+        flex: FlexBox<'frame, Color>,
+        measure_text: &'frame MeasureTextFn<'frame, Color>,
+    ) -> Self {
         KaolinScope { flex, measure_text }
     }
 
-    pub fn with(mut self, style: FlexStyle, contents: fn(KaolinScope) -> KaolinScope) -> Self {
+    pub fn with(
+        mut self,
+        style: FlexStyle<Color>,
+        contents: fn(KaolinScope<'frame, Color>) -> KaolinScope<'frame, Color>,
+    ) -> Self {
         let child_flex = FlexBox::new(style);
         let child_scope = KaolinScope::new(child_flex, self.measure_text);
         let modified_scope = contents(child_scope);
@@ -25,11 +38,11 @@ impl<'frame> KaolinScope<'frame> {
         self
     }
 
-    pub(super) fn conclude(self) -> FlexBox<'frame> {
+    pub(super) fn conclude(self) -> FlexBox<'frame, Color> {
         self.flex
     }
 
-    pub fn text(mut self, content: &str, style: TextConfig) -> Self {
+    pub fn text(mut self, content: &str, style: TextConfig<Color>) -> Self {
         let text_element = TextElement::new(content, style, self.measure_text);
         self.flex.add_child(KaolinElement::Text(text_element));
         self

@@ -10,18 +10,25 @@ use crate::{
 
 pub mod scope;
 
-pub type MeasureTextFn<'frame> = Box<dyn Fn(&str, &TextConfig) -> (f32, f32) + 'frame>;
+pub type MeasureTextFn<'frame, Color> =
+    Box<dyn Fn(&str, &TextConfig<Color>) -> (f32, f32) + 'frame>;
 
-pub struct Kaolin<'frame> {
+pub struct Kaolin<'frame, Color>
+where
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+{
     width: f32,
     height: f32,
-    measure_text: MeasureTextFn<'frame>,
+    measure_text: MeasureTextFn<'frame, Color>,
 }
 
-impl<'frame> Kaolin<'frame> {
+impl<'frame, Color> Kaolin<'frame, Color>
+where
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+{
     pub fn new(
         window_dimensions: (i32, i32),
-        measure_text: impl Fn(&str, &TextConfig) -> (f32, f32) + 'frame,
+        measure_text: impl Fn(&str, &TextConfig<Color>) -> (f32, f32) + 'frame,
     ) -> Self {
         let (width, height) = window_dimensions;
         let measure_text = Box::new(measure_text);
@@ -32,7 +39,10 @@ impl<'frame> Kaolin<'frame> {
         }
     }
 
-    pub fn draw(&self, drawing_fn: fn(scope::KaolinScope) -> scope::KaolinScope) -> RenderCommands {
+    pub fn draw(
+        &self,
+        drawing_fn: fn(scope::KaolinScope<'_, Color>) -> scope::KaolinScope<'_, Color>,
+    ) -> RenderCommands<Color> {
         let flex = FlexBox::new(flex_style! {
             sizing: BoxSizing {
                 width: Sizing::Fixed(self.width),

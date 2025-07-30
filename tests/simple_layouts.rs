@@ -6,14 +6,30 @@ use kaolin::{
     kaolin::Kaolin,
     layout,
     style::{
-        FlexStyle, TextConfig,
-        colors::Colors,
+        FlexStyle, KaolinColor, TextConfig,
         layout::{Alignment, Justification},
         sizing::BoxSizing,
     },
 };
 
-fn measure_text(text: &str, _config: &TextConfig) -> (f32, f32) {
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+enum TestColor {
+    #[default]
+    Black,
+    Transparent,
+}
+
+impl KaolinColor<TestColor> for TestColor {
+    fn default_foreground_color() -> Self {
+        TestColor::Black
+    }
+
+    fn default_background_color() -> Self {
+        TestColor::Transparent
+    }
+}
+
+fn measure_text(text: &str, _config: &TextConfig<TestColor>) -> (f32, f32) {
     (text.len() as f32 * 10.0, 20.0)
 }
 
@@ -43,7 +59,7 @@ fn simple_layout() {
         vec![
             RenderCommand::DrawRectangle {
                 id: "".to_string(), // ID is not used in this context
-                color: Colors::Transparent.into(),
+                color: TestColor::Transparent,
                 x: 0,
                 y: 0,
                 width: 800,
@@ -90,7 +106,7 @@ fn double_growth() {
         vec![
             RenderCommand::DrawRectangle {
                 id: "".to_string(), // ID is not used in this context
-                color: Colors::Transparent.into(),
+                color: TestColor::Transparent,
                 x: 0,
                 y: 0,
                 width: 200,
@@ -98,7 +114,7 @@ fn double_growth() {
             },
             RenderCommand::DrawRectangle {
                 id: "".to_string(), // ID is not used in this context
-                color: Colors::Transparent.into(),
+                color: TestColor::Transparent,
                 x: 200,
                 y: 0,
                 width: 600,
@@ -124,7 +140,7 @@ fn fit_sizing() {
         vec![
             RenderCommand::DrawRectangle {
                 id: "".to_string(), // ID is not used in this context
-                color: Colors::Transparent.into(),
+                color: TestColor::Transparent,
                 x: 0,
                 y: 0,
                 width: 140,

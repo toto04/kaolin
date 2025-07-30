@@ -1,12 +1,12 @@
 use std::{collections::VecDeque, rc::Rc};
 
-use crate::{
-    elements::flexbox::FlexBox,
-    style::{TextConfig, colors::Color},
-};
+use crate::{elements::flexbox::FlexBox, style::TextConfig};
 
 #[derive(Debug, Clone)]
-pub enum RenderCommand {
+pub enum RenderCommand<Color>
+where
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+{
     DrawRectangle {
         id: String,
         x: i32,
@@ -19,11 +19,14 @@ pub enum RenderCommand {
         text: String,
         x: i32,
         y: i32,
-        config: Rc<TextConfig>,
+        config: Rc<TextConfig<Color>>,
     },
 }
 
-impl PartialEq for RenderCommand {
+impl<Color> PartialEq for RenderCommand<Color>
+where
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+{
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (
@@ -65,12 +68,18 @@ impl PartialEq for RenderCommand {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct RenderCommands {
-    commands: VecDeque<RenderCommand>,
+pub struct RenderCommands<Color>
+where
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+{
+    commands: VecDeque<RenderCommand<Color>>,
 }
 
-impl RenderCommands {
-    pub fn new(root: FlexBox) -> Self {
+impl<Color> RenderCommands<Color>
+where
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+{
+    pub fn new(root: FlexBox<Color>) -> Self {
         let children = root.children;
         RenderCommands {
             commands: children.render_nodes().collect::<VecDeque<_>>(),
@@ -86,8 +95,11 @@ impl RenderCommands {
     }
 }
 
-impl Iterator for RenderCommands {
-    type Item = RenderCommand;
+impl<Color> Iterator for RenderCommands<Color>
+where
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+{
+    type Item = RenderCommand<Color>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.commands.pop_front()

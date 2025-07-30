@@ -10,17 +10,23 @@ use crate::{
 };
 use uuid::Uuid;
 
-pub enum KaolinElement<'frame> {
-    Flex(FlexBox<'frame>),
-    Text(TextElement<'frame>),
+pub enum KaolinElement<'frame, Color>
+where
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+{
+    Flex(FlexBox<'frame, Color>),
+    Text(TextElement<'frame, Color>),
 }
 
-pub(crate) struct KaolinNode<'frame> {
+pub(crate) struct KaolinNode<'frame, Color>
+where
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+{
     id: String,
     growable_width: bool,
     growable_height: bool,
     shrinkable: bool,
-    element: KaolinElement<'frame>,
+    element: KaolinElement<'frame, Color>,
     sizing: (SizingDimensions, SizingDimensions),
     current_width: f32,
     current_height: f32,
@@ -28,8 +34,11 @@ pub(crate) struct KaolinNode<'frame> {
     y: f32,
 }
 
-impl<'frame> KaolinNode<'frame> {
-    fn new(element: KaolinElement<'frame>, id: Option<String>) -> Self {
+impl<'frame, Color> KaolinNode<'frame, Color>
+where
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+{
+    fn new(element: KaolinElement<'frame, Color>, id: Option<String>) -> Self {
         let id = id.unwrap_or_else(|| Uuid::new_v4().to_string());
         match &element {
             KaolinElement::Flex(flex_box) => {
@@ -175,7 +184,7 @@ impl<'frame> KaolinNode<'frame> {
         }
     }
 
-    pub fn render(&self) -> Box<dyn Iterator<Item = RenderCommand> + '_> {
+    pub fn render(&self) -> Box<dyn Iterator<Item = RenderCommand<Color>> + '_> {
         match &self.element {
             KaolinElement::Flex(flex_box) => {
                 Box::new(flex_box.render(RenderCommand::DrawRectangle {
@@ -192,35 +201,41 @@ impl<'frame> KaolinNode<'frame> {
     }
 }
 
-pub(crate) struct KaolinNodes<'frame> {
-    pub(crate) nodes: Vec<KaolinNode<'frame>>,
+pub(crate) struct KaolinNodes<'frame, Color>
+where
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+{
+    pub(crate) nodes: Vec<KaolinNode<'frame, Color>>,
 }
 
-impl<'frame> KaolinNodes<'frame> {
+impl<'frame, Color> KaolinNodes<'frame, Color>
+where
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+{
     fn new() -> Self {
         KaolinNodes { nodes: Vec::new() }
     }
 
-    fn push(&mut self, node: KaolinNode<'frame>) {
+    fn push(&mut self, node: KaolinNode<'frame, Color>) {
         self.nodes.push(node);
     }
 
-    fn get_growable_children_w(&mut self) -> Vec<&mut KaolinNode<'frame>> {
+    fn get_growable_children_w(&mut self) -> Vec<&mut KaolinNode<'frame, Color>> {
         self.nodes.iter_mut().filter(|c| c.growable_width).collect()
     }
 
-    fn get_growable_children_h(&mut self) -> Vec<&mut KaolinNode<'frame>> {
+    fn get_growable_children_h(&mut self) -> Vec<&mut KaolinNode<'frame, Color>> {
         self.nodes
             .iter_mut()
             .filter(|c| c.growable_height)
             .collect()
     }
 
-    fn get_shrinkable_children(&mut self) -> Vec<&mut KaolinNode<'frame>> {
+    fn get_shrinkable_children(&mut self) -> Vec<&mut KaolinNode<'frame, Color>> {
         self.nodes.iter_mut().filter(|c| c.shrinkable).collect()
     }
 
-    fn get_smallest_widths(children: &Vec<&mut KaolinNode<'frame>>) -> (f32, f32) {
+    fn get_smallest_widths(children: &Vec<&mut KaolinNode<'frame, Color>>) -> (f32, f32) {
         let mut smallest = f32::INFINITY;
         let mut second_smallest = f32::INFINITY;
         for node in children {
@@ -234,7 +249,7 @@ impl<'frame> KaolinNodes<'frame> {
         (smallest, second_smallest)
     }
 
-    fn get_smallest_heights(children: &Vec<&mut KaolinNode<'frame>>) -> (f32, f32) {
+    fn get_smallest_heights(children: &Vec<&mut KaolinNode<'frame, Color>>) -> (f32, f32) {
         let mut smallest = f32::INFINITY;
         let mut second_smallest = f32::INFINITY;
         for node in children {
@@ -248,7 +263,7 @@ impl<'frame> KaolinNodes<'frame> {
         (smallest, second_smallest)
     }
 
-    fn get_biggest_widths(children: &Vec<&mut KaolinNode<'frame>>) -> (f32, f32) {
+    fn get_biggest_widths(children: &Vec<&mut KaolinNode<'frame, Color>>) -> (f32, f32) {
         let mut biggest = 0.0;
         let mut second_biggest = 0.0;
         for node in children {
@@ -282,7 +297,7 @@ impl<'frame> KaolinNodes<'frame> {
             .fold(0.0, |acc, c| acc.max(c.current_height))
     }
 
-    fn nodes(&mut self) -> impl Iterator<Item = &mut KaolinNode<'frame>> {
+    fn nodes(&mut self) -> impl Iterator<Item = &mut KaolinNode<'frame, Color>> {
         self.nodes.iter_mut()
     }
 
@@ -310,7 +325,7 @@ impl<'frame> KaolinNodes<'frame> {
         self.nodes.len()
     }
 
-    pub fn render_nodes(&self) -> Box<dyn Iterator<Item = RenderCommand> + '_> {
+    pub fn render_nodes(&self) -> Box<dyn Iterator<Item = RenderCommand<Color>> + '_> {
         Box::new(self.nodes.iter().flat_map(|node| node.render()))
     }
 
