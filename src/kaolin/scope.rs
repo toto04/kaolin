@@ -28,7 +28,7 @@ where
     pub fn with(
         mut self,
         style: FlexStyle<Color>,
-        contents: fn(KaolinScope<'frame, Color>) -> KaolinScope<'frame, Color>,
+        contents: impl Fn(KaolinScope<'frame, Color>) -> KaolinScope<'frame, Color>,
     ) -> Self {
         let child_flex = FlexBox::new(style);
         let child_scope = KaolinScope::new(child_flex, self.measure_text);
