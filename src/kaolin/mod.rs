@@ -41,7 +41,7 @@ where
 
     pub fn draw(
         &self,
-        drawing_fn: fn(scope::KaolinScope<'_, Color>) -> scope::KaolinScope<'_, Color>,
+        drawing_fn: impl Fn(scope::KaolinScope<'_, Color>) -> scope::KaolinScope<'_, Color>,
     ) -> RenderCommands<Color> {
         let flex = FlexBox::new(flex_style! {
             sizing: BoxSizing {

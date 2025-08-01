@@ -78,6 +78,41 @@ impl BoxSizing {
     }
 }
 
+#[macro_export]
+macro_rules! sizing {
+    ($width:expr, $height:expr) => {
+        kaolin::style::sizing::BoxSizing {
+            width: $width,
+            height: $height,
+        }
+    };
+
+    ($size:expr) => {
+        kaolin::style::sizing::BoxSizing {
+            width: $size,
+            height: $size,
+        }
+    };
+    (width: $width:expr, height: $height:expr) => {
+        kaolin::style::sizing::BoxSizing {
+            width: $width,
+            height: $height,
+        }
+    };
+    ($key:ident : $value:expr$(,)?) => {
+        kaolin::style::sizing::BoxSizing {
+            $key: $value,
+            ..kaolin::style::sizing::BoxSizing::default()
+        }
+    };
+    ($($key:ident : $value:expr),* $(,)?) => {
+        kaolin::style::sizing::BoxSizing {
+            $($key: $value,)*
+        }
+    };
+    () => {};
+}
+
 #[derive(Default, Clone, Copy)]
 pub enum Sizing {
     #[default]
@@ -120,21 +155,21 @@ impl From<Sizing> for SizingDimensions {
 #[macro_export]
 macro_rules! fit {
     ($min:expr, $max:expr) => {
-        Sizing::Fit {
+        kaolin::style::sizing::Sizing::Fit {
             min: Some($min),
             max: Some($max),
         }
     };
 
     ($max:expr) => {
-        Sizing::Fit {
+        kaolin::style::sizing::Sizing::Fit {
             min: None,
             max: Some($max),
         }
     };
 
     () => {
-        Sizing::Fit {
+        kaolin::style::sizing::Sizing::Fit {
             min: None,
             max: None,
         }

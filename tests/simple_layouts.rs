@@ -4,11 +4,10 @@ use kaolin::{
     commands::RenderCommand,
     fixed, flex_style, grow,
     kaolin::Kaolin,
-    layout,
+    layout, sizing,
     style::{
         FlexStyle, KaolinColor, TextConfig,
         layout::{Alignment, Justification},
-        sizing::BoxSizing,
     },
 };
 
@@ -39,7 +38,7 @@ fn simple_layout() {
     let commands = kaolin.draw(|k| {
         k.with(
             flex_style! {
-              sizing: BoxSizing {
+              sizing: sizing! {
                   width: grow!(1.0),
                   height: grow!(1.0),
               },
@@ -81,7 +80,7 @@ fn double_growth() {
     let commands = kaolin.draw(|k| {
         k.with(
             flex_style! {
-              sizing: BoxSizing {
+              sizing: sizing! {
                 width: grow!(1.0),
                 height: grow!(1.0),
               }
@@ -90,7 +89,7 @@ fn double_growth() {
         )
         .with(
             flex_style! {
-                sizing: BoxSizing {
+                sizing: sizing! {
                     width: grow!(3.0),
                     height: fixed!(200.0),
                 }
