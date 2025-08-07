@@ -2,6 +2,9 @@ pub mod layout;
 pub mod padding;
 pub mod sizing;
 
+use derive_default_constructor::DefaultConstructor;
+use derive_setters::Setters;
+
 use crate::style::layout::Layout;
 use crate::style::padding::Padding;
 use crate::style::sizing::BoxSizing;
@@ -18,16 +21,23 @@ where
     }
 }
 
+#[derive(DefaultConstructor, Clone, Copy, Setters)]
 pub struct FlexStyle<Color>
 where
-    Color: Default + Copy + PartialEq + KaolinColor<Color>,
+    Color: std::default::Default + Copy + PartialEq + KaolinColor<Color>,
 {
+    /// TODO: Doesn't do anything right now
     pub color: Color,
+    /// The background color for the flex item
     pub background_color: Color,
+    /// The layout configuration for the children of the flex item
     pub layout: Layout,
+    /// The sizing configuration for the flex item
     pub sizing: BoxSizing,
-    pub padding: Padding,   // Padding around the flex item
-    pub corner_radius: f32, // Optional corner radius for rounded corners
+    /// The padding around the flex item
+    pub padding: Padding,
+    /// The corner radius for the flex item
+    pub corner_radius: f32,
 }
 
 impl<Color> Default for FlexStyle<Color>
@@ -46,20 +56,7 @@ where
     }
 }
 
-#[macro_export]
-macro_rules! flex_style {
-    () => {
-        FlexStyle::default()
-    };
-    ($($key:ident : $value:expr),* $(,)?) => {
-        FlexStyle {
-            $( $key: $value, )*
-            ..FlexStyle::default()
-        }
-    };
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(DefaultConstructor, Debug, Clone, Copy, PartialEq, Setters)]
 pub struct TextConfig<Color>
 where
     Color: Default + Copy + PartialEq + KaolinColor<Color>,

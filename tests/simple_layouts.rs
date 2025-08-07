@@ -1,13 +1,12 @@
 use std::rc::Rc;
 
 use kaolin::{
+    Kaolin,
     commands::RenderCommand,
-    fixed, flex_style, grow,
-    kaolin::Kaolin,
-    layout, sizing,
+    fixed, grow, sizing,
     style::{
         FlexStyle, KaolinColor, TextConfig,
-        layout::{Alignment, Justification},
+        layout::{Alignment, Direction, Justification, Layout},
     },
 };
 
@@ -37,17 +36,16 @@ fn simple_layout() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let commands = kaolin.draw(|k| {
         k.with(
-            flex_style! {
-              sizing: sizing! {
-                  width: grow!(1.0),
-                  height: grow!(1.0),
-              },
-              layout: layout! {
-                  justification: Justification::Center,
-                  alignment: Alignment::Center,
-              }
-            },
-            |k| k.text("Hello, Kaolin!", TextConfig::default()),
+            FlexStyle::new()
+                .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
+                .layout(
+                    Layout::new()
+                        .direction(Direction::LeftToRight)
+                        .alignment(Alignment::Center)
+                        .justification(Justification::Center)
+                        .gap(10.0),
+                ),
+            |k| k.text("Hello, Kaolin!", TextConfig::new()),
         )
     });
 
@@ -65,7 +63,7 @@ fn simple_layout() {
                 height: 600
             },
             RenderCommand::DrawText {
-                config: Rc::new(TextConfig::default()),
+                config: Rc::new(TextConfig::new()),
                 text: "Hello, Kaolin!".to_string(),
                 x: (800 - 140) / 2, // Assuming 10px per character width
                 y: (600 - 20) / 2,  // Assuming 20px per line height
@@ -78,24 +76,11 @@ fn simple_layout() {
 fn double_growth() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let commands = kaolin.draw(|k| {
-        k.with(
-            flex_style! {
-              sizing: sizing! {
-                width: grow!(1.0),
-                height: grow!(1.0),
-              }
-            },
-            |k| k,
-        )
-        .with(
-            flex_style! {
-                sizing: sizing! {
-                    width: grow!(3.0),
-                    height: fixed!(200.0),
-                }
-            },
-            |k| k,
-        )
+        k.with(FlexStyle::new().sizing(sizing! { grow!() }), |k| k)
+            .with(
+                FlexStyle::new().sizing(sizing! {grow!(3.0), fixed!(200.0)}),
+                |k| k,
+            )
     });
 
     println!("{commands:?}");
@@ -127,8 +112,8 @@ fn double_growth() {
 fn fit_sizing() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let commands = kaolin.draw(|k| {
-        k.with(flex_style! {}, |k| {
-            k.text("Hello, Kaolin!", TextConfig::default())
+        k.with(FlexStyle::new(), |k| {
+            k.text("Hello, Kaolin!", TextConfig::new())
         })
     });
 
@@ -146,7 +131,7 @@ fn fit_sizing() {
                 height: 20
             },
             RenderCommand::DrawText {
-                config: Rc::new(TextConfig::default()),
+                config: Rc::new(TextConfig::new()),
                 text: "Hello, Kaolin!".to_string(),
                 x: 0,
                 y: 0

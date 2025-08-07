@@ -1,11 +1,8 @@
 use crate::{
     commands::RenderCommands,
     elements::flexbox::FlexBox,
-    flex_style,
-    style::{
-        FlexStyle, TextConfig,
-        sizing::{BoxSizing, Sizing},
-    },
+    fixed, sizing,
+    style::{FlexStyle, TextConfig},
 };
 
 pub mod scope;
@@ -43,12 +40,10 @@ where
         &self,
         drawing_fn: impl Fn(scope::KaolinScope<'_, Color>) -> scope::KaolinScope<'_, Color>,
     ) -> RenderCommands<Color> {
-        let flex = FlexBox::new(flex_style! {
-            sizing: BoxSizing {
-                width: Sizing::Fixed(self.width),
-                height: Sizing::Fixed(self.height),
-            }
-        });
+        let flex = FlexBox::new(FlexStyle::default().sizing(sizing! {
+            width: fixed!(self.width),
+            height: fixed!(self.height),
+        }));
         let mut scope = scope::KaolinScope::new(flex, &self.measure_text);
         scope = drawing_fn(scope);
 

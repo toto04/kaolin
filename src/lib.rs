@@ -3,3 +3,5 @@ mod elements;
 pub mod kaolin;
 pub mod renderers;
 pub mod style;
+
+pub use kaolin::Kaolin;

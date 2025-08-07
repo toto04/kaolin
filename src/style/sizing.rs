@@ -81,36 +81,38 @@ impl BoxSizing {
 #[macro_export]
 macro_rules! sizing {
     ($width:expr, $height:expr) => {
-        kaolin::style::sizing::BoxSizing {
+        $crate::style::sizing::BoxSizing {
             width: $width,
             height: $height,
         }
     };
 
     ($size:expr) => {
-        kaolin::style::sizing::BoxSizing {
+        $crate::style::sizing::BoxSizing {
             width: $size,
             height: $size,
         }
     };
     (width: $width:expr, height: $height:expr) => {
-        kaolin::style::sizing::BoxSizing {
+        $crate::style::sizing::BoxSizing {
             width: $width,
             height: $height,
         }
     };
     ($key:ident : $value:expr$(,)?) => {
-        kaolin::style::sizing::BoxSizing {
+        $crate::style::sizing::BoxSizing {
             $key: $value,
-            ..kaolin::style::sizing::BoxSizing::default()
+            ..$crate::style::sizing::BoxSizing::default()
         }
     };
     ($($key:ident : $value:expr),* $(,)?) => {
-        kaolin::style::sizing::BoxSizing {
+        $crate::style::sizing::BoxSizing {
             $($key: $value,)*
         }
     };
-    () => {};
+    () => {
+        $crate::style::sizing::BoxSizing::default()
+    };
 }
 
 #[derive(Default, Clone, Copy)]
@@ -155,21 +157,21 @@ impl From<Sizing> for SizingDimensions {
 #[macro_export]
 macro_rules! fit {
     ($min:expr, $max:expr) => {
-        kaolin::style::sizing::Sizing::Fit {
+        $crate::style::sizing::Sizing::Fit {
             min: Some($min),
             max: Some($max),
         }
     };
 
     ($max:expr) => {
-        kaolin::style::sizing::Sizing::Fit {
+        $crate::style::sizing::Sizing::Fit {
             min: None,
             max: Some($max),
         }
     };
 
     () => {
-        kaolin::style::sizing::Sizing::Fit {
+        $crate::style::sizing::Sizing::Fit {
             min: None,
             max: None,
         }
@@ -179,14 +181,14 @@ macro_rules! fit {
 #[macro_export]
 macro_rules! fixed {
     ($size:expr) => {
-        kaolin::style::sizing::Sizing::Fixed($size)
+        $crate::style::sizing::Sizing::Fixed($size)
     };
 }
 
 #[macro_export]
 macro_rules! grow {
     ($factor:expr, $min:expr, $max:expr) => {
-        kaolin::style::sizing::Sizing::Grow {
+        $crate::style::sizing::Sizing::Grow {
             factor: Some($factor),
             min: Some($min),
             max: Some($max),
@@ -194,7 +196,7 @@ macro_rules! grow {
     };
 
     ($factor:expr) => {
-        kaolin::style::sizing::Sizing::Grow {
+        $crate::style::sizing::Sizing::Grow {
             factor: Some($factor),
             min: None,
             max: None,
@@ -202,7 +204,7 @@ macro_rules! grow {
     };
 
     () => {
-        kaolin::style::sizing::Sizing::Grow {
+        $crate::style::sizing::Sizing::Grow {
             factor: None,
             min: None,
             max: None,

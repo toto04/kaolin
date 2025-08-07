@@ -52,6 +52,42 @@ impl Padding {
         }
     }
 
+    pub fn left(value: f32) -> Self {
+        Padding {
+            left: value,
+            right: 0.0,
+            top: 0.0,
+            bottom: 0.0,
+        }
+    }
+
+    pub fn right(value: f32) -> Self {
+        Padding {
+            left: 0.0,
+            right: value,
+            top: 0.0,
+            bottom: 0.0,
+        }
+    }
+
+    pub fn top(value: f32) -> Self {
+        Padding {
+            left: 0.0,
+            right: 0.0,
+            top: value,
+            bottom: 0.0,
+        }
+    }
+
+    pub fn bottom(value: f32) -> Self {
+        Padding {
+            left: 0.0,
+            right: 0.0,
+            top: 0.0,
+            bottom: value,
+        }
+    }
+
     pub fn x(&self) -> f32 {
         self.left + self.right
     }
