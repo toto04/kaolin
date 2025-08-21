@@ -1,34 +1,36 @@
+use typed_floats::tf64::{Positive, PositiveFinite};
+
 use crate::style::layout::Direction;
 
 /// Represents the preferred sizing behavior for a specific Dimension.
 #[derive(Clone, Copy, Debug)]
 pub enum PreferredSize {
     // gravitates towards a fixed size
-    Fixed(f32),
+    Fixed(PositiveFinite),
     // no fixed size, grows indefenetly with a factor
-    Grow(f32),
+    Grow(PositiveFinite),
 }
 
 impl Default for PreferredSize {
     fn default() -> Self {
-        PreferredSize::Fixed(0.0) // gravitate to 0.0 for fit sizing
+        PreferredSize::Fixed(PositiveFinite::new(0.0).unwrap()) // gravitate to 0.0 for fit sizing
     }
 }
 
 /// Represents the sizing information for a UI element used while calculating layout.
 #[derive(Clone, Copy, Debug)]
 pub struct SizingDimensions {
-    pub min: f32,                 // Minimum size
+    pub min: PositiveFinite,      // Minimum size
     pub preferred: PreferredSize, // Preferred size
-    pub max: f32,                 // Maximum size
+    pub max: Positive,            // Maximum size
 }
 
 impl Default for SizingDimensions {
     fn default() -> Self {
         SizingDimensions {
-            min: 0.0,
+            min: PositiveFinite::new(0.0).unwrap(),
             preferred: PreferredSize::default(),
-            max: f32::INFINITY,
+            max: Positive::new(f64::INFINITY).unwrap(), // No maximum limit
         }
     }
 }
@@ -51,16 +53,24 @@ impl SizingDimensions {
     }
 
     /// Returns the growth factor for the dimension.
-    pub fn get_grow_factor(&self) -> f32 {
+    pub fn get_grow_factor(&self) -> f64 {
         match self.preferred {
-            PreferredSize::Grow(factor) => factor,
+            PreferredSize::Grow(factor) => factor.into(),
             _ => 0.0, // Default grow factor if not specified
         }
     }
 
     /// Returns the dimension value clamped between min and max.
-    pub fn clamped(&self, value: f32) -> f32 {
-        value.clamp(self.min, self.max)
+    pub fn clamped(&self, value: f64) -> f64 {
+        value.clamp(self.min.into(), self.max.into())
+    }
+
+    pub fn max(&self) -> f64 {
+        self.max.into()
+    }
+
+    pub fn min(&self) -> f64 {
+        self.min.into()
     }
 }
 
@@ -148,14 +158,14 @@ pub enum Sizing {
     #[default]
     Default,
     Fit {
-        min: Option<f32>,
-        max: Option<f32>,
+        min: Option<PositiveFinite>,
+        max: Option<Positive>,
     },
-    Fixed(f32),
+    Fixed(PositiveFinite),
     Grow {
-        factor: Option<f32>, // Growth factor
-        min: Option<f32>,
-        max: Option<f32>,
+        factor: Option<PositiveFinite>, // Growth factor
+        min: Option<PositiveFinite>,
+        max: Option<Positive>,
     },
 }
 
@@ -164,19 +174,19 @@ impl From<Sizing> for SizingDimensions {
         match sizing {
             Sizing::Default => SizingDimensions::default(), // is actually just FIT with no limits
             Sizing::Fit { min, max } => SizingDimensions {
-                min: min.unwrap_or(0.0),
-                preferred: PreferredSize::Fixed(min.unwrap_or(0.0)), // prefers to stay at the min i guess
-                max: max.unwrap_or(f32::INFINITY),
+                min: min.unwrap_or_default(),
+                preferred: PreferredSize::Fixed(min.unwrap_or_default()), // prefers to stay at the min i guess
+                max: max.unwrap_or(Positive::new(f64::INFINITY).unwrap()),
             },
             Sizing::Fixed(size) => SizingDimensions {
                 min: size,
                 preferred: PreferredSize::Fixed(size),
-                max: size,
+                max: size.into(),
             },
             Sizing::Grow { factor, min, max } => SizingDimensions {
-                min: min.unwrap_or(0.0),
-                preferred: PreferredSize::Grow(factor.unwrap_or(1.0)),
-                max: max.unwrap_or(f32::INFINITY),
+                min: min.unwrap_or_default(),
+                preferred: PreferredSize::Grow(factor.unwrap_or(PositiveFinite::new(1.0).unwrap())),
+                max: max.unwrap_or(Positive::new(f64::INFINITY).unwrap()),
             },
         }
     }
@@ -191,15 +201,15 @@ impl From<Sizing> for SizingDimensions {
 macro_rules! fit {
     ($min:expr, $max:expr) => {
         $crate::style::sizing::Sizing::Fit {
-            min: Some($min),
-            max: Some($max),
+            min: Some(typed_floats::tf64::PositiveFinite::new($min).unwrap()),
+            max: Some(typed_floats::tf64::Positive::new($max).unwrap()),
         }
     };
 
     ($max:expr) => {
         $crate::style::sizing::Sizing::Fit {
             min: None,
-            max: Some($max),
+            max: Some(typed_floats::tf64::Positive::new($max).unwrap()),
         }
     };
 
@@ -217,7 +227,9 @@ macro_rules! fit {
 #[macro_export]
 macro_rules! fixed {
     ($size:expr) => {
-        $crate::style::sizing::Sizing::Fixed($size)
+        $crate::style::sizing::Sizing::Fixed(
+            typed_floats::tf64::PositiveFinite::new($size).unwrap(),
+        )
     };
 }
 
@@ -232,15 +244,15 @@ macro_rules! fixed {
 macro_rules! grow {
     ($factor:expr, $min:expr, $max:expr) => {
         $crate::style::sizing::Sizing::Grow {
-            factor: Some($factor),
-            min: Some($min),
-            max: Some($max),
+            factor: Some(typed_floats::tf64::PositiveFinite::new($factor).unwrap()),
+            min: Some(typed_floats::tf64::PositiveFinite::new($min).unwrap()),
+            max: Some(typed_floats::tf64::Positive::new($max).unwrap()),
         }
     };
 
     ($factor:expr) => {
         $crate::style::sizing::Sizing::Grow {
-            factor: Some($factor),
+            factor: Some(typed_floats::tf64::PositiveFinite::new($factor).unwrap()),
             min: None,
             max: None,
         }

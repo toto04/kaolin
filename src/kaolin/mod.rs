@@ -7,14 +7,14 @@ use crate::{
 
 pub mod scope;
 
-pub type MeasureTextFn<'frame, Color> = Box<dyn Fn(&str, &TextStyle<Color>) -> (f32, f32) + 'frame>;
+pub type MeasureTextFn<'frame, Color> = Box<dyn Fn(&str, &TextStyle<Color>) -> (f64, f64) + 'frame>;
 
 pub struct Kaolin<'frame, Color>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
 {
-    width: f32,
-    height: f32,
+    width: f64,
+    height: f64,
     measure_text: MeasureTextFn<'frame, Color>,
 }
 
@@ -25,14 +25,14 @@ where
     /// Creates a new instance of Kaolin with the specified window dimensions and text measurement function.
     pub fn new(
         window_dimensions: (i32, i32),
-        measure_text: impl Fn(&str, &TextStyle<Color>) -> (f32, f32) + 'frame,
+        measure_text: impl Fn(&str, &TextStyle<Color>) -> (f64, f64) + 'frame,
     ) -> Self {
         let (width, height) = window_dimensions;
         // Box the function to use it everywhere!
         let measure_text = Box::new(measure_text);
         Kaolin {
-            width: width as f32,
-            height: height as f32,
+            width: width as f64,
+            height: height as f64,
             measure_text,
         }
     }

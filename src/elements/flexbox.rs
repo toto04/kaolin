@@ -29,13 +29,13 @@ where
     }
 
     /// Fits the width of the flex container to its children, returning the new width.
-    pub fn fit_width_to_children(&self) -> f32 {
+    pub fn fit_width_to_children(&self) -> f64 {
         match self.style.layout.direction {
             Direction::LeftToRight | Direction::RightToLeft => {
                 let gaps = self.children.gaps();
                 self.children.get_cumulative_width()
                     + self.style.padding.x()
-                    + (gaps as f32) * self.style.layout.gap
+                    + (gaps as f64) * self.style.layout.gap
             }
             Direction::TopToBottom | Direction::BottomToTop => {
                 self.children.get_max_width() + self.style.padding.x()
@@ -44,7 +44,7 @@ where
     }
 
     /// Grows the width of all child elements to fit the container.
-    pub fn grow_children_width(&mut self, current_width: f32) {
+    pub fn grow_children_width(&mut self, current_width: f64) {
         match self.style.layout.direction {
             Direction::LeftToRight | Direction::RightToLeft => {
                 let gaps = self.children.gaps();
@@ -52,7 +52,7 @@ where
                 let mut remaining = current_width
                     - self.style.padding.x()
                     - cum_width
-                    - (gaps as f32) * self.style.layout.gap;
+                    - (gaps as f64) * self.style.layout.gap;
 
                 if remaining > 0.0 {
                     // grow
@@ -68,7 +68,7 @@ where
                             .collect::<Vec<_>>();
 
                         let total_factor =
-                            growing.iter().map(|c| c.get_grow_factor().0).sum::<f32>();
+                            growing.iter().map(|c| c.get_grow_factor().0).sum::<f64>();
                         if total_factor > 0.0 {
                             let grow_amount =
                                 remaining.min(second_smallest - smallest) / total_factor;
@@ -96,7 +96,7 @@ where
                             .filter(|c| c.current_width == biggest)
                             .collect::<Vec<_>>();
 
-                        let len = shrinking.len() as f32;
+                        let len = shrinking.len() as f64;
                         let shrink_amount = -remaining.abs().min(biggest - second_biggest) / len;
                         for child in shrinking {
                             let shrink = child.grow_width(shrink_amount);
@@ -124,9 +124,9 @@ where
     }
 
     /// Fits the height of the flex container to its children, returning the new height.
-    pub fn fit_height_to_children(&mut self, mut current_height: f32, max: f32) -> f32 {
+    pub fn fit_height_to_children(&mut self, mut current_height: f64, max: f64) -> f64 {
         // self.children.fit_heights();
-        let len = self.children.len() as f32;
+        let len = self.children.len() as f64;
 
         match self.style.layout.direction {
             Direction::LeftToRight | Direction::RightToLeft => {
@@ -148,7 +148,7 @@ where
     }
 
     /// Grows the height of all child elements to fit the container.
-    pub fn grow_children_height(&mut self, current_height: f32) {
+    pub fn grow_children_height(&mut self, current_height: f64) {
         match self.style.layout.direction {
             Direction::LeftToRight | Direction::RightToLeft => {
                 self.children
@@ -175,7 +175,7 @@ where
                         .filter(|c| c.current_width == smallest)
                         .collect::<Vec<_>>();
 
-                    let total_factor = growing.iter().map(|c| c.get_grow_factor().1).sum::<f32>();
+                    let total_factor = growing.iter().map(|c| c.get_grow_factor().1).sum::<f64>();
                     if total_factor > 0.0 {
                         let grow_amount = remaining.min(second_smallest - smallest) / total_factor;
                         for child in growing {
@@ -194,12 +194,12 @@ where
 
     /// Positions the child elements within the flex container.
     /// Called after all sizing calculations are complete.
-    pub fn position_children(&mut self, offsets: (f32, f32, f32, f32)) {
+    pub fn position_children(&mut self, offsets: (f64, f64, f64, f64)) {
         let (left, right, top, bottom) = offsets;
         match self.style.layout.direction {
             Direction::LeftToRight | Direction::RightToLeft => {
                 let cum_width = self.children.get_cumulative_width()
-                    + self.children.gaps() as f32 * self.style.layout.gap;
+                    + self.children.gaps() as f64 * self.style.layout.gap;
                 let mut x = match self.style.layout.justification {
                     Justification::Start
                     | Justification::SpaceBetween

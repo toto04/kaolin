@@ -12,13 +12,13 @@ where
     DrawRectangle {
         id: String,
         /// The absolute x position of the rectangle.
-        x: i32,
+        x: f64,
         /// The absolute y position of the rectangle.
-        y: i32,
+        y: f64,
         /// The width of the rectangle.
-        width: i32,
+        width: f64,
         /// The height of the rectangle.
-        height: i32,
+        height: f64,
         /// The background color of the rectangle.
         color: Color,
         /// The corner radius of the rectangle.
@@ -37,9 +37,9 @@ where
         /// calculations are performed with `&str` slices.
         text: String,
         /// The absolute x position of the text.  
-        x: i32,
+        x: f64,
         /// The absolute y position of the text.
-        y: i32,
+        y: f64,
         /// The font ID of the text, passed through from the style.
         /// Interpretation of this value depends on the renderer.
         font_id: u32,

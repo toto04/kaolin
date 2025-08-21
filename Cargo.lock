@@ -88,6 +88,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "const_fn"
+version = "0.4.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f8a2ca5ac02d09563609681103aada9e1777d54fc57a5acd7a41404f9c93b6e"
+
+[[package]]
 name = "darling"
 version = "0.20.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -202,11 +208,12 @@ dependencies = [
 
 [[package]]
 name = "kaolin"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "derive-default-constructor",
  "derive_setters",
  "raylib",
+ "typed_floats",
  "unicode-segmentation",
  "uuid",
 ]
@@ -412,6 +419,29 @@ checksum = "4fee6c4efc90059e10f81e6d42c60a18f76588c3d74cb83a0b242a2b6c7504c1"
 dependencies = [
  "proc-macro2",
  "quote",
+ "syn",
+]
+
+[[package]]
+name = "typed_floats"
+version = "1.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57d7af1876976a887f631967b61df8cbda4d640c6ba1abd155f8e62b035d670b"
+dependencies = [
+ "const_fn",
+ "rustversion",
+ "typed_floats_macros",
+]
+
+[[package]]
+name = "typed_floats_macros"
+version = "1.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f9f6576cd08bc07d3c8a54e90dc3424c7f6b6018db2657a042ddcf5b7c9b6af3"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "rustversion",
  "syn",
 ]
 

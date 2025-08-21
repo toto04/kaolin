@@ -74,5 +74,5 @@ pub struct Layout {
     /// The justification of child elements along the main axis.
     pub justification: Justification,
     /// The gap between child elements.
-    pub gap: f32,
+    pub gap: f64,
 }

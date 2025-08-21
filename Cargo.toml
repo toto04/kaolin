@@ -1,6 +1,6 @@
 [package]
 name = "kaolin"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2024"
 description = "A Rust library for flexible layouts, inspired by Clay"
 license-file = "LICENSE"
@@ -11,6 +11,7 @@ authors = ["Tommaso Morganti <tommaso.morganti@polinetwork.org>"]
 derive-default-constructor = "0.1.0"
 derive_setters = "0.1.8"
 raylib = { version = "5.5.1", optional = true }
+typed_floats = "1.0.6"
 unicode-segmentation = "1.12.0"
 
 [dependencies.uuid]
