@@ -1,15 +1,14 @@
-use std::rc::Rc;
-
 use unicode_segmentation::UnicodeSegmentation;
 
-use crate::{commands::RenderCommand, kaolin::MeasureTextFn, style::TextConfig};
+use crate::{commands::RenderCommand, kaolin::MeasureTextFn, style::TextStyle};
 
+/// Represents a text element in the UI.
 pub struct TextElement<'frame, Color>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
 {
     content: String,
-    config: Rc<TextConfig<Color>>,
+    style: TextStyle<Color>,
     lines: Vec<(usize, usize)>, // (start, end) indices of lines in content
     measure_text: &'frame MeasureTextFn<'frame, Color>, // measure text function
 }
@@ -20,36 +19,39 @@ where
 {
     pub fn new(
         content: &str,
-        config: TextConfig<Color>,
+        style: TextStyle<Color>,
         measure_text: &'frame MeasureTextFn<'frame, Color>,
     ) -> Self {
         let lines = Vec::new();
         TextElement {
             content: content.to_string(),
-            config: Rc::new(config),
+            style,
             lines,
             measure_text,
         }
     }
 
+    /// Calculates the preferred size of the text element, without wrapping.
     pub fn get_preferred_size(&self) -> (f32, f32) {
         self.content
             .lines()
             .fold((0.0, 0.0), |(max_width, total_height), line| {
-                let (width, height) = (self.measure_text)(line, &self.config);
+                let (width, height) = (self.measure_text)(line, &self.style);
                 (max_width.max(width), total_height + height)
             })
     }
 
+    /// Calculates the minimum size the text can wrap to without overflowing.
     pub fn get_minimum_size(&self) -> (f32, f32) {
         self.content
             .split_whitespace()
             .fold((0.0, 0.0), |(min_width, min_height), word| {
-                let (width, height) = (self.measure_text)(word, &self.config);
+                let (width, height) = (self.measure_text)(word, &self.style);
                 (min_width.max(width), min_height.max(height))
             })
     }
 
+    /// Wraps the text to fit within the specified width.
     pub fn wrap_text(&mut self, current_width: f32) -> f32 {
         // what we should actually do is find the positions of newlines
         // for each line either split at the last whitespace if the line is too long or at the newline
@@ -69,7 +71,7 @@ where
                 nextline = newlines.next().unwrap_or(self.content.len());
             } else {
                 let slice = &self.content[start..next_word_start].trim_end();
-                let (width, height) = (self.measure_text)(slice, &self.config);
+                let (width, height) = (self.measure_text)(slice, &self.style);
 
                 if width > current_width {
                     self.lines.push((start, prev_last));
@@ -82,25 +84,35 @@ where
         let last_slice = &self.content[start..].trim_end();
         self.lines.push((start, last_slice.len() + start));
         if !last_slice.is_empty() {
-            let (_, height) = (self.measure_text)(last_slice, &self.config);
+            let (_, height) = (self.measure_text)(last_slice, &self.style);
             total_height += height;
         }
         total_height
     }
 
-    pub fn render(&self, x: f32, y: f32) -> impl Iterator<Item = RenderCommand<Color>> {
+    /// Renders the text element, returning an iterator of rendering commands,
+    /// one for each line of text.
+    pub fn render(
+        &self,
+        x: f32,
+        y: f32,
+        inherited_color: Color,
+    ) -> impl Iterator<Item = RenderCommand<Color>> {
         let mut current_y = y;
         self.lines.iter().map(move |line_indices| {
             let (start, end) = *line_indices;
             let line = &self.content[start..end];
-            let (_, height) = (self.measure_text)(line, &self.config);
+            let (_, height) = (self.measure_text)(line, &self.style);
             let y = current_y as i32;
             current_y += height;
+
             RenderCommand::DrawText {
                 text: line.to_string(),
                 x: x as i32,
                 y,
-                config: self.config.clone(),
+                font_id: self.style.font_id,
+                font_size: self.style.font_size,
+                color: self.style.color.unwrap_or(inherited_color),
             }
         })
     }

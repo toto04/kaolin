@@ -1,11 +1,10 @@
-use std::rc::Rc;
-
 use kaolin::{
     Kaolin,
     commands::RenderCommand,
     fixed, grow, sizing,
     style::{
-        FlexStyle, KaolinColor, TextConfig,
+        FlexStyle, KaolinColor, TextStyle,
+        border::Border,
         layout::{Alignment, Direction, Justification, Layout},
     },
 };
@@ -15,6 +14,7 @@ enum TestColor {
     #[default]
     Black,
     Transparent,
+    Red,
 }
 
 impl KaolinColor<TestColor> for TestColor {
@@ -27,7 +27,7 @@ impl KaolinColor<TestColor> for TestColor {
     }
 }
 
-fn measure_text(text: &str, _config: &TextConfig<TestColor>) -> (f32, f32) {
+fn measure_text(text: &str, _config: &TextStyle<TestColor>) -> (f32, f32) {
     (text.len() as f32 * 10.0, 20.0)
 }
 
@@ -45,12 +45,10 @@ fn simple_layout() {
                         .justification(Justification::Center)
                         .gap(10.0),
                 ),
-            |k| k.text("Hello, Kaolin!", TextConfig::new()),
+            |k| k.text("Hello, Kaolin!", TextStyle::new()),
         )
     });
 
-    println!("{commands:?}");
-    assert_eq!(commands.len(), 2);
     assert_eq!(
         commands.collect::<Vec<_>>(),
         vec![
@@ -60,13 +58,17 @@ fn simple_layout() {
                 x: 0,
                 y: 0,
                 width: 800,
-                height: 600
+                height: 600,
+                corner_radius: 0.0,
+                border: Border::default()
             },
             RenderCommand::DrawText {
-                config: Rc::new(TextConfig::new()),
                 text: "Hello, Kaolin!".to_string(),
-                x: (800 - 140) / 2, // Assuming 10px per character width
-                y: (600 - 20) / 2,  // Assuming 20px per line height
+                x: (800 - 140) / 2,
+                y: (600 - 20) / 2,
+                font_id: 0,
+                font_size: 16.0,
+                color: TestColor::Black
             },
         ]
     );
@@ -83,8 +85,6 @@ fn double_growth() {
             )
     });
 
-    println!("{commands:?}");
-    assert_eq!(commands.len(), 2);
     assert_eq!(
         commands.collect::<Vec<_>>(),
         vec![
@@ -94,7 +94,9 @@ fn double_growth() {
                 x: 0,
                 y: 0,
                 width: 200,
-                height: 600
+                height: 600,
+                corner_radius: 0.0,
+                border: Border::default(),
             },
             RenderCommand::DrawRectangle {
                 id: "".to_string(), // ID is not used in this context
@@ -102,7 +104,9 @@ fn double_growth() {
                 x: 200,
                 y: 0,
                 width: 600,
-                height: 200
+                height: 200,
+                corner_radius: 0.0,
+                border: Border::default(),
             },
         ]
     );
@@ -113,12 +117,10 @@ fn fit_sizing() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let commands = kaolin.draw(|k| {
         k.with(FlexStyle::new(), |k| {
-            k.text("Hello, Kaolin!", TextConfig::new())
+            k.text("Hello, Kaolin!", TextStyle::new())
         })
     });
 
-    println!("{commands:?}");
-    assert_eq!(commands.len(), 2);
     assert_eq!(
         commands.collect::<Vec<_>>(),
         vec![
@@ -128,14 +130,52 @@ fn fit_sizing() {
                 x: 0,
                 y: 0,
                 width: 140,
-                height: 20
+                height: 20,
+                corner_radius: 0.0,
+                border: Border::default(),
             },
             RenderCommand::DrawText {
-                config: Rc::new(TextConfig::new()),
                 text: "Hello, Kaolin!".to_string(),
                 x: 0,
-                y: 0
+                y: 0,
+                font_id: 0,
+                font_size: 16.0,
+                color: TestColor::Black,
             }
+        ]
+    );
+}
+
+#[test]
+fn inherited_color() {
+    let kaolin = Kaolin::new((800, 600), measure_text);
+    let commands = kaolin.draw(|k| {
+        k.with(FlexStyle::new().color(TestColor::Red), |k| {
+            k.text("Hello, Kaolin!", TextStyle::new())
+        })
+    });
+
+    assert_eq!(
+        commands.collect::<Vec<_>>(),
+        vec![
+            RenderCommand::DrawRectangle {
+                id: "".to_string(), // ID is not used in this context
+                color: TestColor::Transparent,
+                x: 0,
+                y: 0,
+                width: 140,
+                height: 20,
+                corner_radius: 0.0,
+                border: Border::default(),
+            },
+            RenderCommand::DrawText {
+                text: "Hello, Kaolin!".to_string(),
+                x: 0,
+                y: 0,
+                font_id: 0,
+                font_size: 16.0,
+                color: TestColor::Red, // Inherited color
+            },
         ]
     );
 }

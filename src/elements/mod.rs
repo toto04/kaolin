@@ -88,6 +88,7 @@ where
         }
     }
 
+    /// Returns the growth factors for calculations during the growing phase.
     pub fn get_grow_factor(&self) -> (f32, f32) {
         let w_factor = match self.sizing.0.preferred {
             PreferredSize::Grow(factor) => factor,
@@ -100,6 +101,7 @@ where
         (w_factor, h_factor)
     }
 
+    /// Grows (or shrinks) the width of the element within the given limit.
     fn grow_width(&mut self, limit: f32) -> f32 {
         match self.element {
             KaolinElement::Flex(..) => {
@@ -134,6 +136,7 @@ where
         }
     }
 
+    /// Grows (or shrinks) the height of the element within the given limit.
     fn grow_height(&mut self, limit: f32) -> f32 {
         match self.element {
             KaolinElement::Flex(..) => {
@@ -168,6 +171,7 @@ where
         }
     }
 
+    /// Fits the height of the element to its content.
     fn fit_height(&mut self) {
         let height = self.sizing.1;
         if let KaolinElement::Flex(ref mut flex_box) = self.element {
@@ -176,6 +180,8 @@ where
         }
     }
 
+    /// Sets the position of the element, and propagates the change to its children.
+    /// This is called after all sizing calculations are complete.
     pub fn set_position(&mut self, x: f32, y: f32) {
         self.x = x;
         self.y = y;
@@ -184,19 +190,33 @@ where
         }
     }
 
-    pub fn render(&self) -> Box<dyn Iterator<Item = RenderCommand<Color>> + '_> {
+    /// Renders the element and its children into a series of rendering commands.
+    pub fn render(
+        &self,
+        inherited_color: Color,
+    ) -> Box<dyn Iterator<Item = RenderCommand<Color>> + '_> {
         match &self.element {
-            KaolinElement::Flex(flex_box) => {
-                Box::new(flex_box.render(RenderCommand::DrawRectangle {
-                    id: self.id.clone(),
-                    x: self.x as i32,
-                    y: self.y as i32,
-                    width: self.current_width as i32,
-                    height: self.current_height as i32,
-                    color: flex_box.style.background_color,
-                }))
+            KaolinElement::Flex(flex_box) => Box::new(
+                flex_box.render(
+                    RenderCommand::DrawRectangle {
+                        id: self.id.clone(),
+                        x: self.x as i32,
+                        y: self.y as i32,
+                        width: self.current_width as i32,
+                        height: self.current_height as i32,
+                        color: flex_box
+                            .style
+                            .background_color
+                            .unwrap_or(Color::default_background_color()),
+                        corner_radius: flex_box.style.corner_radius,
+                        border: flex_box.style.border,
+                    },
+                    inherited_color,
+                ),
+            ),
+            KaolinElement::Text(text_element) => {
+                Box::new(text_element.render(self.x, self.y, inherited_color))
             }
-            KaolinElement::Text(text_element) => Box::new(text_element.render(self.x, self.y)),
         }
     }
 }
@@ -216,14 +236,17 @@ where
         KaolinNodes { nodes: Vec::new() }
     }
 
+    /// Add a new child
     fn push(&mut self, node: KaolinNode<'frame, Color>) {
         self.nodes.push(node);
     }
 
+    /// Returns an array of mutable references of all growable children in the horizontal direction.
     fn get_growable_children_w(&mut self) -> Vec<&mut KaolinNode<'frame, Color>> {
         self.nodes.iter_mut().filter(|c| c.growable_width).collect()
     }
 
+    /// Returns an array of mutable references of all growable children in the vertical direction.
     fn get_growable_children_h(&mut self) -> Vec<&mut KaolinNode<'frame, Color>> {
         self.nodes
             .iter_mut()
@@ -231,10 +254,13 @@ where
             .collect()
     }
 
+    /// Returns an array of mutable references of all shrinkable children.
     fn get_shrinkable_children(&mut self) -> Vec<&mut KaolinNode<'frame, Color>> {
         self.nodes.iter_mut().filter(|c| c.shrinkable).collect()
     }
 
+    /// Looks for the smallest and second smallest widths among the children.
+    /// Important to make sure all children grow together.
     fn get_smallest_widths(children: &Vec<&mut KaolinNode<'frame, Color>>) -> (f32, f32) {
         let mut smallest = f32::INFINITY;
         let mut second_smallest = f32::INFINITY;
@@ -249,6 +275,8 @@ where
         (smallest, second_smallest)
     }
 
+    /// Looks for the smallest and second smallest heights among the children.
+    /// Important to make sure all children grow together.
     fn get_smallest_heights(children: &Vec<&mut KaolinNode<'frame, Color>>) -> (f32, f32) {
         let mut smallest = f32::INFINITY;
         let mut second_smallest = f32::INFINITY;
@@ -263,6 +291,8 @@ where
         (smallest, second_smallest)
     }
 
+    /// Looks for the biggest and second biggest widths among the children.
+    /// Important to make sure all children grow together.
     fn get_biggest_widths(children: &Vec<&mut KaolinNode<'frame, Color>>) -> (f32, f32) {
         let mut biggest = 0.0;
         let mut second_biggest = 0.0;
@@ -277,30 +307,36 @@ where
         (biggest, second_biggest)
     }
 
+    /// Returns the cumulative width of the child nodes.
     fn get_cumulative_width(&self) -> f32 {
         self.nodes.iter().map(|c| c.current_width).sum()
     }
 
+    /// Returns the maximum width of the child nodes.
     fn get_max_width(&self) -> f32 {
         self.nodes
             .iter()
             .fold(0.0, |acc, c| acc.max(c.current_width))
     }
 
+    /// Returns the cumulative height of the child nodes.
     fn get_cumulative_height(&self) -> f32 {
         self.nodes.iter().map(|c| c.current_height).sum()
     }
 
+    /// Returns the maximum height of the child nodes.
     fn get_max_height(&self) -> f32 {
         self.nodes
             .iter()
             .fold(0.0, |acc, c| acc.max(c.current_height))
     }
 
+    /// Returns an iterator over the child nodes.
     fn nodes(&mut self) -> impl Iterator<Item = &mut KaolinNode<'frame, Color>> {
         self.nodes.iter_mut()
     }
 
+    /// Propagates the width growth of the element to its children.
     pub fn grow_w(&mut self) {
         self.nodes.iter_mut().for_each(|c| match c.element {
             KaolinElement::Flex(ref mut flex_box) => {
@@ -313,6 +349,7 @@ where
         });
     }
 
+    /// Propagates the height growth of the element to its children.
     pub fn grow_h(&mut self) {
         self.nodes.iter_mut().for_each(|c| {
             if let KaolinElement::Flex(ref mut flex_box) = c.element {
@@ -321,14 +358,23 @@ where
         });
     }
 
+    /// The number of children.
     pub fn len(&self) -> usize {
         self.nodes.len()
     }
 
-    pub fn render_nodes(&self) -> Box<dyn Iterator<Item = RenderCommand<Color>> + '_> {
-        Box::new(self.nodes.iter().flat_map(|node| node.render()))
+    pub fn render_nodes(
+        &self,
+        inherited_color: Color,
+    ) -> Box<dyn Iterator<Item = RenderCommand<Color>> + '_> {
+        Box::new(
+            self.nodes
+                .iter()
+                .flat_map(move |node| node.render(inherited_color)),
+        )
     }
 
+    /// Returns the number of gaps that need to be accounted for.
     pub fn gaps(&self) -> u32 {
         if self.nodes.is_empty() {
             return 0;

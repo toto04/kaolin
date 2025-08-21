@@ -28,6 +28,7 @@ where
         }
     }
 
+    /// Fits the width of the flex container to its children, returning the new width.
     pub fn fit_width_to_children(&self) -> f32 {
         match self.style.layout.direction {
             Direction::LeftToRight | Direction::RightToLeft => {
@@ -42,6 +43,7 @@ where
         }
     }
 
+    /// Grows the width of all child elements to fit the container.
     pub fn grow_children_width(&mut self, current_width: f32) {
         match self.style.layout.direction {
             Direction::LeftToRight | Direction::RightToLeft => {
@@ -121,6 +123,7 @@ where
         self.children.grow_w();
     }
 
+    /// Fits the height of the flex container to its children, returning the new height.
     pub fn fit_height_to_children(&mut self, mut current_height: f32, max: f32) -> f32 {
         // self.children.fit_heights();
         let len = self.children.len() as f32;
@@ -144,6 +147,7 @@ where
         current_height
     }
 
+    /// Grows the height of all child elements to fit the container.
     pub fn grow_children_height(&mut self, current_height: f32) {
         match self.style.layout.direction {
             Direction::LeftToRight | Direction::RightToLeft => {
@@ -188,6 +192,8 @@ where
         self.children.grow_h();
     }
 
+    /// Positions the child elements within the flex container.
+    /// Called after all sizing calculations are complete.
     pub fn position_children(&mut self, offsets: (f32, f32, f32, f32)) {
         let (left, right, top, bottom) = offsets;
         match self.style.layout.direction {
@@ -251,17 +257,25 @@ where
         }
     }
 
+    /// Adds a new child to the flex container.
     pub fn add_child(&mut self, child: KaolinElement<'frame, Color>) {
         self.children.push(KaolinNode::new(child, None));
     }
 
+    /// Creates an iterator representing all render commands for itself and its children in order.
     pub fn render(
         &self,
         self_command: RenderCommand<Color>,
+        inherited_color: Color,
     ) -> impl Iterator<Item = RenderCommand<Color>> {
-        std::iter::once(self_command).chain(self.children.render_nodes())
+        std::iter::once(self_command).chain(
+            self.children
+                .render_nodes(self.style.color.unwrap_or(inherited_color)),
+        )
     }
 
+    /// Consumes the root flex container and all of its children in the element
+    /// tree, producing a series of rendering commands.
     pub fn conclude(self) -> RenderCommands<Color> {
         RenderCommands::new(self)
     }

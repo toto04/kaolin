@@ -1,10 +1,8 @@
 use crate::{
     elements::{KaolinElement, flexbox::FlexBox, text::TextElement},
     kaolin::MeasureTextFn,
-    style::{FlexStyle, TextConfig},
+    style::{FlexStyle, TextStyle},
 };
-
-// pub type DrawingFn = fn(KaolinScope<'_>);
 
 pub struct KaolinScope<'frame, Color>
 where
@@ -18,13 +16,42 @@ impl<'frame, Color> KaolinScope<'frame, Color>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
 {
-    pub fn new(
+    /// Creates a new root scope, this is where the layout tree begins.
+    /// ### This should not be used externally, if you are looking for a way to create a new child element with its own scope, see [KaolinScope::with].
+    ///
+    /// A new scope is also created for each child flex container, iteratively
+    /// allowing for nested layouts.
+    pub(super) fn new(
         flex: FlexBox<'frame, Color>,
         measure_text: &'frame MeasureTextFn<'frame, Color>,
     ) -> Self {
         KaolinScope { flex, measure_text }
     }
 
+    /// Conclude the current scope and return the flex container.
+    /// This function is called internally when the component tree definition is
+    /// completed, allowing the root element to access the finalized layout, consuming
+    /// the scope in the process.
+    pub(super) fn conclude(self) -> FlexBox<'frame, Color> {
+        self.flex
+    }
+
+    /// ### Create a child container within this element
+    ///
+    /// This function allows you to set the style for the child flex container,
+    /// along with a function which takes a new scope as an argument, allowing you
+    /// to recursively set the contents of the child container.
+    ///
+    /// The scope gets also passed through and returned for chaining sibling
+    /// elements.
+    ///
+    /// Example:
+    /// ```ignore
+    /// k.with(FlexStyle::new(), |k| {
+    ///     k.text("Hello, world!", TextStyle::new()) // inside the new child
+    /// })
+    /// .text("Hello from the parent!", TextStyle::new()) // inside the parent, after the child
+    /// ```
     pub fn with(
         mut self,
         style: FlexStyle<Color>,
@@ -38,30 +65,21 @@ where
         self
     }
 
-    pub(super) fn conclude(self) -> FlexBox<'frame, Color> {
-        self.flex
-    }
-
-    pub fn text(mut self, content: &str, style: TextConfig<Color>) -> Self {
+    /// ### Add a text element to the current scope
+    ///
+    /// This function allows you to add a text element to the current scope.
+    /// The text element will be added as a child of the current flex container for which the scope was created.
+    ///
+    /// The scope gets also passed through and returned for chaining sibling
+    /// elements.
+    ///
+    /// Example:
+    /// ```ignore
+    /// k.text("Hello, world!", TextStyle::new()) // new text element inside the flex container
+    /// ```
+    pub fn text(mut self, content: &str, style: TextStyle<Color>) -> Self {
         let text_element = TextElement::new(content, style, self.measure_text);
         self.flex.add_child(KaolinElement::Text(text_element));
         self
     }
 }
-
-// layout calculations order:
-// 1. fit the width --> when creating the node (children have already been added)
-// 2. grow & shrink the width --> before the children, top down when all the tree is built
-// 3. wrap the text --> as we grow, when dealing with text
-// 4. fit the height --> when all children have grown, fit the height before returning
-// 5. grow & shrink the height --> call once again after all the growing
-// 6. position and align all elements
-
-// -- Call the drawing function
-// | -- Create children
-// | -- Fit to width
-// -- Grow width
-// | -- Grow children width
-// | -- Fit to height
-// -- Grow height
-// -- Position and align all elements

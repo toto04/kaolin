@@ -1,5 +1,6 @@
 use crate::style::layout::Direction;
 
+/// Represents the preferred sizing behavior for a specific Dimension.
 #[derive(Clone, Copy, Debug)]
 pub enum PreferredSize {
     // gravitates towards a fixed size
@@ -14,6 +15,7 @@ impl Default for PreferredSize {
     }
 }
 
+/// Represents the sizing information for a UI element used while calculating layout.
 #[derive(Clone, Copy, Debug)]
 pub struct SizingDimensions {
     pub min: f32,                 // Minimum size
@@ -32,18 +34,23 @@ impl Default for SizingDimensions {
 }
 
 impl SizingDimensions {
+    /// True if the sizing is fixed and layout calculations will not change it.
     pub fn is_fixed(&self) -> bool {
         matches!(self.preferred, PreferredSize::Fixed(_))
     }
 
+    /// True if the sizing is growable and can expand to fill available space.
     pub fn is_growable(&self) -> bool {
         matches!(self.preferred, PreferredSize::Grow(_))
     }
 
+    /// True if the sizing is shrinkable and can be reduced in size when
+    /// overflowing its container.
     pub fn is_shrinkable(&self) -> bool {
         self.max > self.min // Allow shrinking if not fixed
     }
 
+    /// Returns the growth factor for the dimension.
     pub fn get_grow_factor(&self) -> f32 {
         match self.preferred {
             PreferredSize::Grow(factor) => factor,
@@ -51,11 +58,13 @@ impl SizingDimensions {
         }
     }
 
+    /// Returns the dimension value clamped between min and max.
     pub fn clamped(&self, value: f32) -> f32 {
         value.clamp(self.min, self.max)
     }
 }
 
+/// Represents the sizing behavior of a box.
 #[derive(Default, Clone, Copy)]
 pub struct BoxSizing {
     pub width: Sizing,
@@ -78,6 +87,24 @@ impl BoxSizing {
     }
 }
 
+/// Defines the sizing behavior for a flex box.
+///
+/// - `sizing!(width, height)` will create a box sizing with the specified width and height behaviors.
+/// - `sizing!(size)` will create a box sizing with the same behavior for both axes.
+/// - `sizing!()` will define a box sizing behavior with default values (fit for both axes).
+///
+/// You can also use `sizing!(key: value)` to specify width or height behavior individually (where `key` is either `width` or `height`, duh).
+///
+/// Example:
+/// ```ignore
+/// // grow both width and height
+/// FlexStyle::new()
+///     .sizing(sizing!(grow!())),
+///
+/// // fit width (max 100.0) and fixed height (200.0)
+/// FlexStyle::new()
+///     .sizing(sizing!(fit!(100.0), fixed!(200.0))),
+/// ```
 #[macro_export]
 macro_rules! sizing {
     ($width:expr, $height:expr) => {
@@ -115,6 +142,7 @@ macro_rules! sizing {
     };
 }
 
+/// Represents the Sizing behavior for a dimension.
 #[derive(Default, Clone, Copy)]
 pub enum Sizing {
     #[default]
@@ -154,6 +182,11 @@ impl From<Sizing> for SizingDimensions {
     }
 }
 
+/// Defines a fit sizing behavior.
+///
+/// - `fit!()` will create a fit behavior with no constraints.
+/// - `fit!(max)` will be interpreted as the maximum size, with no minimum constraint.
+/// - `fit!(min, max)` will set both the minimum and maximum size.
 #[macro_export]
 macro_rules! fit {
     ($min:expr, $max:expr) => {
@@ -178,6 +211,9 @@ macro_rules! fit {
     };
 }
 
+/// Defines a fixed sizing behavior.
+///
+/// - `fixed!(size)` will define a fixed size. It's fixed. The constraints are that it's fixed.
 #[macro_export]
 macro_rules! fixed {
     ($size:expr) => {
@@ -185,6 +221,13 @@ macro_rules! fixed {
     };
 }
 
+/// Defines a grow sizing behavior.
+///
+/// - `grow!()` will create a grow behavior with a default factor of `1.0`.
+/// - `grow!(factor)` will create a grow behavior with the specified factor, and
+///   no constraints. Different factors are useful for giving different
+///   proportions of space to sibling growable elements.
+/// - `grow!(factor, min, max)` will create a grow behavior with the specified constraints.
 #[macro_export]
 macro_rules! grow {
     ($factor:expr, $min:expr, $max:expr) => {
