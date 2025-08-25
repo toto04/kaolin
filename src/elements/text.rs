@@ -80,13 +80,13 @@ where
         // save all the absolute positions of the splitpoints for rendering later
 
         let mut newlines = self.content.match_indices('\n').map(|(i, _)| i);
-        let mut nextline = newlines.next().unwrap_or(self.content.len() + 1);
+        let mut maybe_newline = newlines.next();
         let word_indices = self
             .content
             .unicode_word_indices()
-            .skip(1)
+            .skip(1) // the first word has to be in the first line duh
             .map(|(i, _)| i)
-            .chain(iter::once(self.content.len()));
+            .chain(iter::once(self.content.len())); // end of the content as last "next word index"
 
         // the current start of the slice
         let mut start = 0;
@@ -97,18 +97,20 @@ where
         // accumulated height
         let mut total_height = 0.0;
         for next_word_start in word_indices {
-            if next_word_start >= nextline {
-                self.lines.push((start, nextline));
+            if let Some(next_newline) = maybe_newline
+                && next_word_start >= next_newline
+            {
+                self.lines.push((start, next_newline));
                 start = next_word_start;
                 prev_last = next_word_start;
-                nextline = newlines.next().unwrap_or(self.content.len());
+                maybe_newline = newlines.next();
             } else {
                 // if we wrap, we should check the new word again
                 loop {
                     let slice = self.content[start..next_word_start].trim_end();
                     let (width, height) = (self.measure_text)(slice, &self.style);
 
-                    if width > current_width {
+                    if start < prev_last && width > current_width {
                         // it's a wrap!
                         self.lines.push((start, prev_last)); // push the wrapped line
                         total_height += height; // accumulate height
@@ -124,8 +126,8 @@ where
             prev_word_start = next_word_start;
         }
         let last_slice = &self.content[start..].trim_end();
-        self.lines.push((start, last_slice.len() + start));
         if !last_slice.is_empty() {
+            self.lines.push((start, last_slice.len() + start));
             let (_, height) = (self.measure_text)(last_slice, &self.style);
             total_height += height;
         }
@@ -141,21 +143,24 @@ where
         inherited_color: Color,
     ) -> impl Iterator<Item = RenderCommand<Color>> {
         let mut current_y = y;
-        self.lines.iter().map(move |line_indices| {
+        self.lines.iter().filter_map(move |line_indices| {
             let (start, end) = *line_indices;
-            let line = &self.content[start..end];
+            let line = self.content[start..end].trim();
+            if line.is_empty() {
+                return None;
+            }
             let (_, height) = (self.measure_text)(line, &self.style);
             let y = current_y;
             current_y += height;
 
-            RenderCommand::DrawText {
+            Some(RenderCommand::DrawText {
                 text: line.to_string(),
                 x,
                 y,
                 font_id: self.style.font_id,
                 font_size: self.style.font_size,
                 color: self.style.color.unwrap_or(inherited_color),
-            }
+            })
         })
     }
 }

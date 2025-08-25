@@ -7,8 +7,8 @@ pub struct Border<Color>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
 {
-    width: f32,
-    color: Color,
+    pub width: f32,
+    pub color: Color,
 }
 
 impl<Color> Default for Border<Color>

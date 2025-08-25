@@ -28,14 +28,17 @@ where
         }
     }
 
+    fn get_cumulative_gaps(&self) -> f64 {
+        self.children.gaps() as f64 * self.style.layout.gap
+    }
+
     /// Fits the width of the flex container to its children, returning the new width.
     pub fn fit_width_to_children(&self) -> f64 {
         match self.style.layout.direction {
             Direction::LeftToRight | Direction::RightToLeft => {
-                let gaps = self.children.gaps();
                 self.children.get_cumulative_width()
                     + self.style.padding.x()
-                    + (gaps as f64) * self.style.layout.gap
+                    + self.get_cumulative_gaps()
             }
             Direction::TopToBottom | Direction::BottomToTop => {
                 self.children.get_max_width() + self.style.padding.x()
@@ -47,12 +50,9 @@ where
     pub fn grow_children_width(&mut self, current_width: f64) {
         match self.style.layout.direction {
             Direction::LeftToRight | Direction::RightToLeft => {
-                let gaps = self.children.gaps();
                 let cum_width = self.children.get_cumulative_width(); // lmao
-                let mut remaining = current_width
-                    - self.style.padding.x()
-                    - cum_width
-                    - (gaps as f64) * self.style.layout.gap;
+                let mut remaining =
+                    current_width - self.style.padding.x() - cum_width - self.get_cumulative_gaps();
 
                 if remaining > 0.0 {
                     // grow
@@ -125,9 +125,6 @@ where
 
     /// Fits the height of the flex container to its children, returning the new height.
     pub fn fit_height_to_children(&mut self, mut current_height: f64, max: f64) -> f64 {
-        // self.children.fit_heights();
-        let len = self.children.len() as f64;
-
         match self.style.layout.direction {
             Direction::LeftToRight | Direction::RightToLeft => {
                 current_height = self
@@ -139,7 +136,7 @@ where
 
             Direction::TopToBottom | Direction::BottomToTop => {
                 current_height += self.children.get_cumulative_height();
-                current_height += (len - 1.0) * self.style.layout.gap;
+                current_height += self.get_cumulative_gaps();
                 current_height += self.style.padding.y();
                 current_height = current_height.min(max);
             }
@@ -151,28 +148,30 @@ where
     pub fn grow_children_height(&mut self, current_height: f64) {
         match self.style.layout.direction {
             Direction::LeftToRight | Direction::RightToLeft => {
-                self.children
-                    .get_growable_children_h()
-                    .iter_mut()
-                    .for_each(|child| {
-                        if child.growable_height {
-                            child.grow_height(current_height - child.current_height);
-                        }
-                    });
+                self.children.nodes().for_each(|child| {
+                    let remaining = current_height - child.current_height - self.style.padding.y();
+                    if remaining > 0.0 && child.growable_height {
+                        child.grow_height(remaining);
+                    }
+                    child.growable_height = false; // Once grown, they can't grow anymore
+                });
             }
             Direction::TopToBottom | Direction::BottomToTop => {
                 let cum_height = self.children.get_cumulative_height(); // lmao
-                let mut remaining = current_height - self.style.padding.y() - cum_height;
+                let mut remaining = current_height
+                    - self.style.padding.y()
+                    - cum_height
+                    - self.get_cumulative_gaps();
                 let mut growable_children = self.children.get_growable_children_h();
 
                 while remaining > 0.0 && !growable_children.is_empty() {
-                    let mut total_grow = 0.0;
+                    let mut total_growth = 0.0;
                     let (smallest, second_smallest) =
                         KaolinNodes::get_smallest_heights(&growable_children);
 
                     let growing = growable_children
                         .iter_mut()
-                        .filter(|c| c.current_width == smallest)
+                        .filter(|c| c.current_height == smallest)
                         .collect::<Vec<_>>();
 
                     let total_factor = growing.iter().map(|c| c.get_grow_factor().1).sum::<f64>();
@@ -181,10 +180,12 @@ where
                         for child in growing {
                             let factor = child.get_grow_factor().1;
                             let grow = child.grow_height(grow_amount * factor);
-                            total_grow += grow;
+                            total_growth += grow;
                         }
+                    } else {
+                        break; // avoid infinite loop
                     }
-                    remaining -= total_grow;
+                    remaining -= total_growth;
                     growable_children.retain(|c| c.growable_height);
                 }
             }
@@ -196,17 +197,36 @@ where
     /// Called after all sizing calculations are complete.
     pub fn position_children(&mut self, offsets: (f64, f64, f64, f64)) {
         let (left, right, top, bottom) = offsets;
+
+        let tot_width = right - left;
+        let tot_height = bottom - top;
+
         match self.style.layout.direction {
             Direction::LeftToRight | Direction::RightToLeft => {
-                let cum_width = self.children.get_cumulative_width()
-                    + self.children.gaps() as f64 * self.style.layout.gap;
+                let n_gaps = self.children.gaps() as f64;
+
+                // cumulative width of all children before gap
+                let cum_width = self.children.get_cumulative_width();
+                let empty_width = tot_width - cum_width;
+
+                // distance between each child
+                let gap = match self.style.layout.justification {
+                    Justification::SpaceBetween => empty_width / n_gaps,
+                    Justification::SpaceAround => empty_width / (n_gaps + 2.0),
+                    _ => 0.0,
+                }
+                .max(self.style.layout.gap); // never go below the set gap
+
+                let leftover_width = empty_width - gap * n_gaps;
+
                 let mut x = match self.style.layout.justification {
-                    Justification::Start
-                    | Justification::SpaceBetween
-                    | Justification::SpaceAround => left + self.style.padding.left,
-                    Justification::End => right - left - cum_width - self.style.padding.right,
+                    Justification::Start | Justification::SpaceBetween => {
+                        left + self.style.padding.left // left offset and padding
+                    }
+                    Justification::SpaceAround => left + self.style.padding.left + gap, // space around adds the gap to the outside
+                    Justification::End => left + leftover_width - self.style.padding.right, // whatever is missing from the total, including right padding
                     Justification::Center => {
-                        (right - left - self.style.padding.x() - cum_width) / 2.0
+                        (leftover_width - self.style.padding.x()) / 2.0
                             + left
                             + self.style.padding.left
                     }
@@ -216,27 +236,36 @@ where
                     let y = match self.style.layout.alignment {
                         Alignment::Start | Alignment::Stretch => top + self.style.padding.top,
                         Alignment::Center => {
-                            (bottom - top - self.style.padding.y() - child.current_height) / 2.0
+                            (tot_height - self.style.padding.y() - child.current_height) / 2.0
                                 + top
                                 + self.style.padding.top
                         }
                         Alignment::End => bottom - self.style.padding.bottom - child.current_height,
                     };
                     child.set_position(x, y);
-                    x += child.current_width + self.style.layout.gap;
+                    x += child.current_width + gap;
                 }
             }
             Direction::TopToBottom | Direction::BottomToTop => {
+                let n_gaps = self.children.gaps() as f64;
                 let cum_height = self.children.get_cumulative_height();
+                let empty_height = tot_height - cum_height;
+
+                let gap = match self.style.layout.justification {
+                    Justification::SpaceBetween => empty_height / n_gaps,
+                    Justification::SpaceAround => empty_height / (n_gaps + 2.0),
+                    _ => 0.0,
+                }
+                .max(self.style.layout.gap); // never go below the set gap
+
                 let mut y = match self.style.layout.justification {
-                    Justification::Start
-                    | Justification::SpaceBetween
-                    | Justification::SpaceAround => top + self.style.padding.top,
-                    Justification::End => bottom - top - cum_height - self.style.padding.bottom,
+                    Justification::Start | Justification::SpaceBetween => {
+                        top + self.style.padding.top
+                    }
+                    Justification::SpaceAround => top + self.style.padding.top + gap,
+                    Justification::End => top + empty_height - self.style.padding.bottom,
                     Justification::Center => {
-                        (bottom - top - self.style.padding.y() - cum_height) / 2.0
-                            + top
-                            + self.style.padding.top
+                        (empty_height - self.style.padding.y()) / 2.0 + top + self.style.padding.top
                     }
                 };
 
@@ -244,14 +273,14 @@ where
                     let x = match self.style.layout.alignment {
                         Alignment::Start | Alignment::Stretch => left + self.style.padding.left,
                         Alignment::Center => {
-                            (right - left - self.style.padding.x() - child.current_width) / 2.0
+                            (tot_width - self.style.padding.x() - child.current_width) / 2.0
                                 + left
                                 + self.style.padding.left
                         }
                         Alignment::End => right - self.style.padding.right - child.current_width,
                     };
                     child.set_position(x, y);
-                    y += child.current_height + self.style.layout.gap;
+                    y += child.current_height + gap;
                 }
             }
         }
