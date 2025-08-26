@@ -1,7 +1,7 @@
 use derive_default_constructor::DefaultConstructor;
 use derive_setters::Setters;
 
-#[derive(Default, Clone, Copy)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum Direction {
     /// Default. Lays out elements from left to right.
     #[default]
@@ -14,27 +14,35 @@ pub enum Direction {
     BottomToTop,
 }
 
-/// Shorthand for layout directions.
-///
-/// - `direction!(ltr)` for Left to Right
-/// - `direction!(ttb)` for Top to Bottom
-/// - `direction!(rtl)` for Right to Left
-/// - `direction!(btt)` for Bottom to Top
-#[macro_export]
-macro_rules! direction {
-    (ltr) => {
-        $crate::style::layout::Direction::LeftToRight
-    };
-    (ttb) => {
-        $crate::style::layout::Direction::TopToBottom
-    };
-    (rtl) => {
-        $crate::style::layout::Direction::RightToLeft
-    };
-    (btt) => {
-        $crate::style::layout::Direction::BottomToTop
-    };
+impl Direction {
+    /// Returns true if the direction is horizontal (LeftToRight or RightToLeft).
+    #[inline]
+    pub fn is_horizontal(&self) -> bool {
+        matches!(self, Direction::LeftToRight | Direction::RightToLeft)
+    }
 }
+
+// /// Shorthand for layout directions.
+// ///
+// /// - `Layout::new().direction!(ltr)` for Left to Right
+// /// - `Layout::new().direction!(ttb)` for Top to Bottom
+// /// - `Layout::new().direction!(rtl)` for Right to Left
+// /// - `Layout::new().direction!(btt)` for Bottom to Top
+// #[macro_export]
+// macro_rules! direction {
+//     (ltr) => {
+//         direction($crate::style::layout::Direction::LeftToRight)
+//     };
+//     (ttb) => {
+//         direction($crate::style::layout::Direction::TopToBottom)
+//     };
+//     (rtl) => {
+//         direction($crate::style::layout::Direction::RightToLeft)
+//     };
+//     (btt) => {
+//         direction($crate::style::layout::Direction::BottomToTop)
+//     };
+// }
 
 #[derive(Default, Clone, Copy)]
 pub enum Alignment {
@@ -76,3 +84,33 @@ pub struct Layout {
     /// The gap between child elements.
     pub gap: f64,
 }
+
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+//     use crate::direction;
+
+//     #[test]
+//     fn test_layout_direction() {
+//         let layout = Layout::new().direction!(ltr);
+//         assert_eq!(layout.direction, Direction::LeftToRight);
+//     }
+
+//     #[test]
+//     fn test_layout_alignment() {
+//         let layout = Layout::new().alignment!(center);
+//         assert_eq!(layout.alignment, Alignment::Center);
+//     }
+
+//     #[test]
+//     fn test_layout_justification() {
+//         let layout = Layout::new().justification!(space_between);
+//         assert_eq!(layout.justification, Justification::SpaceBetween);
+//     }
+
+//     #[test]
+//     fn test_layout_gap() {
+//         let layout = Layout::new().gap!(10.0);
+//         assert_eq!(layout.gap, 10.0);
+//     }
+// }

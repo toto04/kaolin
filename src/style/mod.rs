@@ -65,6 +65,25 @@ where
     }
 }
 
+impl<Color> FlexStyle<Color>
+where
+    Color: Default + Copy + PartialEq + KaolinColor<Color>,
+{
+    #[inline]
+    pub fn has_horizontal_layout(&self) -> bool {
+        self.layout.direction.is_horizontal()
+    }
+
+    #[inline]
+    pub fn switch_axis<T>(&self, (a, b): (T, T)) -> (T, T) {
+        if self.has_horizontal_layout() {
+            (a, b)
+        } else {
+            (b, a)
+        }
+    }
+}
+
 /// Style for a text element.
 #[derive(DefaultConstructor, Debug, Clone, Copy, PartialEq, Setters)]
 pub struct TextStyle<Color>

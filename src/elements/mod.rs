@@ -102,7 +102,11 @@ where
         (w_factor, h_factor)
     }
 
-    /// Grows (or shrinks) the width of the element within the given limit.
+    /// ### Grows (or shrinks) the width of the element within the given limit.
+    /// Returns the amount of growth/shrinkage actually applied.
+    ///
+    /// The returned value differs from the input value only if the element was
+    /// constrained by its minimum or maximum size.
     fn grow_width(&mut self, limit: f64) -> f64 {
         match self.element {
             KaolinElement::Flex(..) => {
@@ -137,17 +141,19 @@ where
         }
     }
 
-    /// Grows (or shrinks) the height of the element within the given limit.
+    /// ### Grows the height of the element within the given limit.
+    /// Returns the amount of growth actually applied.
+    ///
+    /// The returned value differs from the input value only if the element was
+    /// constrained by its maximum size.
     fn grow_height(&mut self, limit: f64) -> f64 {
+        debug_assert!(limit > 0.0, "Height can only grow, never shrink");
         match self.element {
             KaolinElement::Flex(..) => {
                 let grown;
                 if limit > self.sizing.1.max() - self.current_height {
                     grown = self.sizing.1.max() - self.current_height;
                     self.growable_height = false; // No more growth possible
-                } else if limit < self.sizing.1.min() - self.current_height {
-                    grown = self.sizing.1.min() - self.current_height;
-                    self.shrinkable = false; // No more shrinking possible
                 } else {
                     grown = limit;
                 }
@@ -156,19 +162,7 @@ where
                 self.current_height = self.current_height.min(self.sizing.1.max());
                 grown
             }
-            KaolinElement::Text(..) => {
-                let shrunk;
-                if limit > 0.0 {
-                    shrunk = 0.0; // Text elements do not grow
-                } else if limit < self.sizing.1.min() - self.current_height {
-                    shrunk = self.sizing.1.min() - self.current_height;
-                    self.shrinkable = false; // No more shrinking possible
-                } else {
-                    shrunk = limit;
-                }
-                self.current_height += shrunk;
-                shrunk
-            }
+            _ => 0.0,
         }
     }
 
@@ -181,8 +175,8 @@ where
         }
     }
 
-    /// Sets the position of the element, and propagates the change to its children.
-    /// This is called after all sizing calculations are complete.
+    /// ### Sets the position of the element, and propagates the change to its children.
+    /// This gets called after all sizing calculations are complete.
     pub fn set_position(&mut self, x: f64, y: f64) {
         self.x = x;
         self.y = y;
@@ -338,7 +332,7 @@ where
     }
 
     /// Propagates the width growth of the element to its children.
-    pub fn grow_w(&mut self) {
+    pub fn do_grow_width(&mut self) {
         self.nodes.iter_mut().for_each(|c| match c.element {
             KaolinElement::Flex(ref mut flex_box) => {
                 flex_box.grow_children_width(c.current_width);
@@ -351,7 +345,7 @@ where
     }
 
     /// Propagates the height growth of the element to its children.
-    pub fn grow_h(&mut self) {
+    pub fn do_grow_height(&mut self) {
         self.nodes.iter_mut().for_each(|c| {
             if let KaolinElement::Flex(ref mut flex_box) = c.element {
                 flex_box.grow_children_height(c.current_height);
@@ -360,6 +354,7 @@ where
     }
 
     /// The number of children.
+    #[allow(dead_code)]
     pub fn len(&self) -> usize {
         self.nodes.len()
     }

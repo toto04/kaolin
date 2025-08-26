@@ -1,4 +1,4 @@
-use std::ops::Add;
+use core::{cmp::min_by, ops::Add};
 
 use crate::{
     commands::{RenderCommand, RenderCommands},
@@ -48,149 +48,155 @@ where
 
     /// Grows the width of all child elements to fit the container.
     pub fn grow_children_width(&mut self, current_width: f64) {
-        match self.style.layout.direction {
-            Direction::LeftToRight | Direction::RightToLeft => {
-                let cum_width = self.children.get_cumulative_width(); // lmao
-                let mut remaining =
-                    current_width - self.style.padding.x() - cum_width - self.get_cumulative_gaps();
+        if self.style.has_horizontal_layout() {
+            let cum_width = self.children.get_cumulative_width(); // lmao
+            let mut remaining =
+                current_width - self.style.padding.x() - cum_width - self.get_cumulative_gaps();
 
-                if remaining > 0.0 {
-                    // grow
-                    let mut growable_children = self.children.get_growable_children_w();
-                    while remaining > 0.0 && !growable_children.is_empty() {
-                        let mut total_growth = 0.0;
-                        let (smallest, second_smallest) =
-                            KaolinNodes::get_smallest_widths(&growable_children);
+            let shrinking = remaining < 0.0;
 
-                        let growing = growable_children
-                            .iter_mut()
-                            .filter(|c| c.current_width == smallest)
-                            .collect::<Vec<_>>();
+            // create a list of children that will be subject to shrinking/growing
+            let mut modifiable_children = if shrinking {
+                self.children.get_shrinkable_children()
+            } else {
+                self.children.get_growable_children_w()
+            };
 
-                        let total_factor =
-                            growing.iter().map(|c| c.get_grow_factor().0).sum::<f64>();
-                        if total_factor > 0.0 {
-                            let grow_amount =
-                                remaining.min(second_smallest - smallest) / total_factor;
-                            for child in growing {
-                                let factor = child.get_grow_factor().0;
-                                let growth = child.grow_width(grow_amount * factor);
-                                total_growth += growth;
-                            }
-                        } else {
-                            break;
-                        }
-                        remaining -= total_growth;
-                        growable_children.retain(|c| c.growable_width);
-                    }
-                } else if remaining < 0.0 {
-                    // shrink
-                    let mut shrinkable_children = self.children.get_shrinkable_children();
-                    while remaining < 0.0 && !shrinkable_children.is_empty() {
-                        let mut total_shrink = 0.0;
-                        let (biggest, second_biggest) =
-                            KaolinNodes::get_biggest_widths(&shrinkable_children);
+            while remaining.abs() > 0.0 && !modifiable_children.is_empty() {
+                let mut total_change = 0.0;
+                // Get the current extreme widths
+                // the extreme is the starting point for the growth/shrinking, the second extreme is the stopping point for this iteration
+                let (extreme, second_extreme) = if shrinking {
+                    KaolinNodes::get_biggest_widths(&modifiable_children)
+                } else {
+                    KaolinNodes::get_smallest_widths(&modifiable_children)
+                };
 
-                        let shrinking = shrinkable_children
-                            .iter_mut()
-                            .filter(|c| c.current_width == biggest)
-                            .collect::<Vec<_>>();
+                // get the list of children that have the current extreme width
+                let currently_modifying = modifiable_children
+                    .iter_mut()
+                    .filter(|c| c.current_width == extreme)
+                    .collect::<Vec<_>>();
 
-                        let len = shrinking.len() as f64;
-                        let shrink_amount = -remaining.abs().min(biggest - second_biggest) / len;
-                        for child in shrinking {
-                            let shrink = child.grow_width(shrink_amount);
-                            total_shrink += shrink;
-                        }
+                //  total factor for dividing the available space
+                let total_factor = if shrinking {
+                    currently_modifying.len() as f64
+                } else {
+                    currently_modifying
+                        .iter()
+                        .map(|c| c.get_grow_factor().0)
+                        .sum::<f64>()
+                };
 
-                        remaining -= total_shrink;
-                        shrinkable_children.retain(|c| c.shrinkable);
-                    }
+                if total_factor <= 0.0 {
+                    break; // avoid infinite loops, means no progress can be made
                 }
-            }
-            Direction::TopToBottom | Direction::BottomToTop => {
-                self.children.nodes().for_each(|child| {
-                    let remaining = current_width - child.current_width - self.style.padding.x();
-                    if (remaining > 0.0 && child.growable_width)
-                        || (remaining < 0.0 && child.shrinkable)
-                    {
-                        child.grow_width(remaining);
+
+                // calculate the base change amount for each child
+                let change_amount = min_by(remaining, second_extreme - extreme, |a, b| {
+                    a.abs()
+                        .partial_cmp(&b.abs())
+                        .unwrap_or_else(|| panic!("wtf"))
+                }) / total_factor;
+
+                for child in currently_modifying {
+                    // how much of the base change amount should this child get?
+                    let factor = if shrinking {
+                        1.0
+                    } else {
+                        child.get_grow_factor().0
+                    };
+                    // grow the child to the new width
+                    let change = child.grow_width(change_amount * factor);
+                    total_change += change; // keep track of the total change
+                }
+
+                // remove the amount we changed from the remaining space
+                remaining -= total_change;
+                // retain only the children that can still be modified
+                modifiable_children.retain(|c| {
+                    if shrinking {
+                        c.shrinkable
+                    } else {
+                        c.growable_width
                     }
-                    child.growable_width = false; // Once grown, they can't grow anymore
                 });
             }
+        } else {
+            // in cross axis, the growth is done individually for each child instead of sequentially
+            self.children.nodes().for_each(|child| {
+                // each has its own remaining space
+                let remaining = current_width - child.current_width - self.style.padding.x();
+                if (remaining > 0.0 && child.growable_width)
+                    || (remaining < 0.0 && child.shrinkable)
+                {
+                    child.grow_width(remaining);
+                }
+                child.growable_width = false; // Once grown, they can't grow anymore
+            });
         }
-        self.children.grow_w();
+        self.children.do_grow_width();
     }
 
     /// Fits the height of the flex container to its children, returning the new height.
     pub fn fit_height_to_children(&mut self, mut current_height: f64, max: f64) -> f64 {
-        match self.style.layout.direction {
-            Direction::LeftToRight | Direction::RightToLeft => {
-                current_height = self
-                    .children
-                    .get_max_height()
-                    .add(self.style.padding.y())
-                    .min(max);
-            }
-
-            Direction::TopToBottom | Direction::BottomToTop => {
-                current_height += self.children.get_cumulative_height();
-                current_height += self.get_cumulative_gaps();
-                current_height += self.style.padding.y();
-                current_height = current_height.min(max);
-            }
+        if self.style.has_horizontal_layout() {
+            current_height = self
+                .children
+                .get_max_height()
+                .add(self.style.padding.y())
+                .min(max);
+        } else {
+            current_height += self.children.get_cumulative_height();
+            current_height += self.get_cumulative_gaps();
+            current_height += self.style.padding.y();
+            current_height = current_height.min(max);
         }
         current_height
     }
 
     /// Grows the height of all child elements to fit the container.
     pub fn grow_children_height(&mut self, current_height: f64) {
-        match self.style.layout.direction {
-            Direction::LeftToRight | Direction::RightToLeft => {
-                self.children.nodes().for_each(|child| {
-                    let remaining = current_height - child.current_height - self.style.padding.y();
-                    if remaining > 0.0 && child.growable_height {
-                        child.grow_height(remaining);
-                    }
-                    child.growable_height = false; // Once grown, they can't grow anymore
-                });
-            }
-            Direction::TopToBottom | Direction::BottomToTop => {
-                let cum_height = self.children.get_cumulative_height(); // lmao
-                let mut remaining = current_height
-                    - self.style.padding.y()
-                    - cum_height
-                    - self.get_cumulative_gaps();
-                let mut growable_children = self.children.get_growable_children_h();
-
-                while remaining > 0.0 && !growable_children.is_empty() {
-                    let mut total_growth = 0.0;
-                    let (smallest, second_smallest) =
-                        KaolinNodes::get_smallest_heights(&growable_children);
-
-                    let growing = growable_children
-                        .iter_mut()
-                        .filter(|c| c.current_height == smallest)
-                        .collect::<Vec<_>>();
-
-                    let total_factor = growing.iter().map(|c| c.get_grow_factor().1).sum::<f64>();
-                    if total_factor > 0.0 {
-                        let grow_amount = remaining.min(second_smallest - smallest) / total_factor;
-                        for child in growing {
-                            let factor = child.get_grow_factor().1;
-                            let grow = child.grow_height(grow_amount * factor);
-                            total_growth += grow;
-                        }
-                    } else {
-                        break; // avoid infinite loop
-                    }
-                    remaining -= total_growth;
-                    growable_children.retain(|c| c.growable_height);
+        if self.style.has_horizontal_layout() {
+            self.children.nodes().for_each(|child| {
+                let remaining = current_height - child.current_height - self.style.padding.y();
+                if remaining > 0.0 && child.growable_height {
+                    child.grow_height(remaining);
                 }
+                child.growable_height = false; // Once grown, they can't grow anymore
+            });
+        } else {
+            let cum_height = self.children.get_cumulative_height(); // lmao
+            let mut remaining =
+                current_height - self.style.padding.y() - cum_height - self.get_cumulative_gaps();
+            let mut growable_children = self.children.get_growable_children_h();
+
+            while remaining > 0.0 && !growable_children.is_empty() {
+                let mut total_growth = 0.0;
+                let (smallest, second_smallest) =
+                    KaolinNodes::get_smallest_heights(&growable_children);
+
+                let growing = growable_children
+                    .iter_mut()
+                    .filter(|c| c.current_height == smallest)
+                    .collect::<Vec<_>>();
+
+                let total_factor = growing.iter().map(|c| c.get_grow_factor().1).sum::<f64>();
+                if total_factor > 0.0 {
+                    let grow_amount = remaining.min(second_smallest - smallest) / total_factor;
+                    for child in growing {
+                        let factor = child.get_grow_factor().1;
+                        let grow = child.grow_height(grow_amount * factor);
+                        total_growth += grow;
+                    }
+                } else {
+                    break; // avoid infinite loop
+                }
+                remaining -= total_growth;
+                growable_children.retain(|c| c.growable_height);
             }
         }
-        self.children.grow_h();
+        self.children.do_grow_height();
     }
 
     /// Positions the child elements within the flex container.
@@ -198,91 +204,78 @@ where
     pub fn position_children(&mut self, offsets: (f64, f64, f64, f64)) {
         let (left, right, top, bottom) = offsets;
 
-        let tot_width = right - left;
-        let tot_height = bottom - top;
+        let (tot_main_dimension, tot_cross_dimension) =
+            self.style.switch_axis((right - left, bottom - top));
 
-        match self.style.layout.direction {
-            Direction::LeftToRight | Direction::RightToLeft => {
-                let n_gaps = self.children.gaps() as f64;
+        // number of gaps between children
+        let n_gaps = self.children.gaps() as f64;
+        // cumulative space occupied by the children in the main axis
+        let cum_dimension = if self.style.has_horizontal_layout() {
+            self.children.get_cumulative_width()
+        } else {
+            self.children.get_cumulative_height()
+        };
 
-                // cumulative width of all children before gap
-                let cum_width = self.children.get_cumulative_width();
-                let empty_width = tot_width - cum_width;
+        // total usable empty space in the main axis
+        let empty_dimension = tot_main_dimension - cum_dimension;
 
-                // distance between each child
-                let gap = match self.style.layout.justification {
-                    Justification::SpaceBetween => empty_width / n_gaps,
-                    Justification::SpaceAround => empty_width / (n_gaps + 2.0),
-                    _ => 0.0,
-                }
-                .max(self.style.layout.gap); // never go below the set gap
+        // the actual distance the elements need to be apart in the main axis
+        let gap = match self.style.layout.justification {
+            Justification::SpaceBetween => empty_dimension / n_gaps,
+            Justification::SpaceAround => empty_dimension / (n_gaps + 2.0),
+            _ => 0.0,
+        }
+        .max(self.style.layout.gap); // never go below the set gap
 
-                let leftover_width = empty_width - gap * n_gaps;
+        let leftover_dimension = empty_dimension - gap * n_gaps; // unused space by the children in the main axis
 
-                let mut x = match self.style.layout.justification {
-                    Justification::Start | Justification::SpaceBetween => {
-                        left + self.style.padding.left // left offset and padding
-                    }
-                    Justification::SpaceAround => left + self.style.padding.left + gap, // space around adds the gap to the outside
-                    Justification::End => left + leftover_width - self.style.padding.right, // whatever is missing from the total, including right padding
-                    Justification::Center => {
-                        (leftover_width - self.style.padding.x()) / 2.0
-                            + left
-                            + self.style.padding.left
-                    }
-                };
+        // first drawable point for the children in both dimensions
+        let (main_starting_offset, cross_starting_offset) = self
+            .style
+            .switch_axis((left + self.style.padding.left, top + self.style.padding.top));
 
-                for child in &mut self.children.nodes {
-                    let y = match self.style.layout.alignment {
-                        Alignment::Start | Alignment::Stretch => top + self.style.padding.top,
-                        Alignment::Center => {
-                            (tot_height - self.style.padding.y() - child.current_height) / 2.0
-                                + top
-                                + self.style.padding.top
-                        }
-                        Alignment::End => bottom - self.style.padding.bottom - child.current_height,
-                    };
-                    child.set_position(x, y);
-                    x += child.current_width + gap;
-                }
+        // last drawable point for the children in both dimensions
+        let (main_ending_offset, cross_ending_offset) = self.style.switch_axis((
+            right - self.style.padding.right,
+            bottom - self.style.padding.bottom,
+        ));
+
+        // cumulative padding in both dimensions
+        let (main_pad, cross_pad) = self
+            .style
+            .switch_axis((self.style.padding.x(), self.style.padding.y()));
+
+        // main axis position
+        let mut main_axis = match self.style.layout.justification {
+            Justification::Start | Justification::SpaceBetween => {
+                main_starting_offset // left offset and padding
             }
-            Direction::TopToBottom | Direction::BottomToTop => {
-                let n_gaps = self.children.gaps() as f64;
-                let cum_height = self.children.get_cumulative_height();
-                let empty_height = tot_height - cum_height;
+            Justification::SpaceAround => main_starting_offset + gap, // space around adds the gap to the outside
+            Justification::End => main_ending_offset - cum_dimension - gap * n_gaps, // whatever is missing from the total, including right padding
+            Justification::Center => main_starting_offset + (leftover_dimension - main_pad) / 2.0,
+        };
 
-                let gap = match self.style.layout.justification {
-                    Justification::SpaceBetween => empty_height / n_gaps,
-                    Justification::SpaceAround => empty_height / (n_gaps + 2.0),
-                    _ => 0.0,
+        // empty space for each child in the cross dimension
+        let usable_cross_dimension = tot_cross_dimension - cross_pad;
+
+        for child in self.children.nodes() {
+            let (main_child_dimension, cross_child_dimension) = self
+                .style
+                .switch_axis((child.current_width, child.current_height));
+
+            let cross_axis = match self.style.layout.alignment {
+                Alignment::Start | Alignment::Stretch => cross_starting_offset,
+                Alignment::Center => {
+                    cross_starting_offset + (usable_cross_dimension - cross_child_dimension) / 2.0
                 }
-                .max(self.style.layout.gap); // never go below the set gap
-
-                let mut y = match self.style.layout.justification {
-                    Justification::Start | Justification::SpaceBetween => {
-                        top + self.style.padding.top
-                    }
-                    Justification::SpaceAround => top + self.style.padding.top + gap,
-                    Justification::End => top + empty_height - self.style.padding.bottom,
-                    Justification::Center => {
-                        (empty_height - self.style.padding.y()) / 2.0 + top + self.style.padding.top
-                    }
-                };
-
-                for child in &mut self.children.nodes {
-                    let x = match self.style.layout.alignment {
-                        Alignment::Start | Alignment::Stretch => left + self.style.padding.left,
-                        Alignment::Center => {
-                            (tot_width - self.style.padding.x() - child.current_width) / 2.0
-                                + left
-                                + self.style.padding.left
-                        }
-                        Alignment::End => right - self.style.padding.right - child.current_width,
-                    };
-                    child.set_position(x, y);
-                    y += child.current_height + gap;
-                }
+                Alignment::End => cross_ending_offset - cross_child_dimension,
+            };
+            if self.style.has_horizontal_layout() {
+                child.set_position(main_axis, cross_axis);
+            } else {
+                child.set_position(cross_axis, main_axis);
             }
+            main_axis += main_child_dimension + gap;
         }
     }
 
