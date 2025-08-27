@@ -132,9 +132,7 @@ where
     pub(crate) fn new(root: FlexBox<Color>) -> Self {
         let children = root.children;
         RenderCommands {
-            commands: children
-                .render_nodes(Color::default_foreground_color())
-                .collect::<VecDeque<_>>(),
+            commands: children.render_nodes().collect::<VecDeque<_>>(),
         }
     }
 

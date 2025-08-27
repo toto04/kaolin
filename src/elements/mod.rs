@@ -1,33 +1,24 @@
 pub mod flexbox;
 pub mod text;
-
-use flexbox::FlexBox;
-use text::TextElement;
-use typed_floats::tf64::Positive;
+pub mod traits;
 
 use crate::{
     commands::RenderCommand,
+    elements::traits::KaolinElement,
     style::sizing::{PreferredSize, SizingDimensions},
 };
 use uuid::Uuid;
 
-pub enum KaolinElement<'frame, Color>
+pub(crate) struct KaolinNode<Color>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
 {
-    Flex(FlexBox<'frame, Color>),
-    Text(TextElement<'frame, Color>),
-}
-
-pub(crate) struct KaolinNode<'frame, Color>
-where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
-{
+    #[allow(dead_code)]
     id: String,
     growable_width: bool,
     growable_height: bool,
     shrinkable: bool,
-    element: KaolinElement<'frame, Color>,
+    element: Box<dyn KaolinElement<Color>>,
     sizing: (SizingDimensions, SizingDimensions),
     current_width: f64,
     current_height: f64,
@@ -35,57 +26,24 @@ where
     y: f64,
 }
 
-impl<'frame, Color> KaolinNode<'frame, Color>
+impl<Color> KaolinNode<Color>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
 {
-    fn new(element: KaolinElement<'frame, Color>, id: Option<String>) -> Self {
+    pub(crate) fn new(element: impl KaolinElement<Color> + 'static, id: Option<String>) -> Self {
         let id = id.unwrap_or_else(|| Uuid::new_v4().to_string());
-        match &element {
-            KaolinElement::Flex(flex_box) => {
-                let style = &flex_box.style;
-                let width = SizingDimensions::from(style.sizing.width);
-                let height = SizingDimensions::from(style.sizing.height);
-
-                KaolinNode {
-                    id,
-                    growable_width: width.is_growable(),
-                    growable_height: height.is_growable(),
-                    shrinkable: width.is_shrinkable(),
-                    current_width: width.clamped(flex_box.fit_width_to_children()),
-                    current_height: height.min.into(),
-                    sizing: (width, height),
-                    element,
-                    x: 0.0,
-                    y: 0.0,
-                }
-            }
-            KaolinElement::Text(text_element) => {
-                let (pref_width, pref_height) = text_element.get_preferred_size();
-                let width = SizingDimensions {
-                    min: text_element.get_minimum_size().0,
-                    preferred: PreferredSize::Fixed(pref_width),
-                    max: pref_width.into(),
-                };
-                let height = SizingDimensions {
-                    min: pref_height,
-                    preferred: PreferredSize::Fixed(pref_height),
-                    max: Positive::new(f64::INFINITY).unwrap(),
-                };
-
-                KaolinNode {
-                    id,
-                    growable_width: false,
-                    growable_height: false,
-                    shrinkable: true,
-                    element,
-                    current_width: pref_width.into(),
-                    current_height: pref_height.into(),
-                    sizing: (width, height),
-                    x: 0.0,
-                    y: 0.0,
-                }
-            }
+        let (width, height) = element.get_sizing_dimensions();
+        KaolinNode {
+            id,
+            growable_width: element.default_growable_width(&width),
+            growable_height: element.default_growable_height(&height),
+            shrinkable: element.default_shrinkable(&width),
+            current_width: element.starting_width(&width),
+            current_height: element.starting_height(&height),
+            sizing: (width, height),
+            element: Box::new(element),
+            x: 0.0,
+            y: 0.0,
         }
     }
 
@@ -108,36 +66,24 @@ where
     /// The returned value differs from the input value only if the element was
     /// constrained by its minimum or maximum size.
     fn grow_width(&mut self, limit: f64) -> f64 {
-        match self.element {
-            KaolinElement::Flex(..) => {
-                let grown;
-                if limit > self.sizing.0.max() - self.current_width {
-                    grown = self.sizing.0.max() - self.current_width;
-                    self.growable_width = false; // No more growth possible
-                } else if limit < self.sizing.0.min() - self.current_width {
-                    grown = self.sizing.0.min() - self.current_width;
-                    self.shrinkable = false; // No more shrinking possible
-                } else {
-                    grown = limit;
-                }
-
-                self.current_width += grown;
-                self.current_width = self.current_width.min(self.sizing.0.max.into());
-                grown
+        let amount = self.sizing.0.clamped(self.current_width + limit) - self.current_width;
+        if self.growable_width && amount > 0.0 {
+            self.current_width += amount;
+            if amount != limit {
+                self.growable_width = false; // No more growth possible
             }
-            KaolinElement::Text(..) => {
-                let shrunk;
-                if limit > 0.0 {
-                    shrunk = 0.0; // Text elements do not grow
-                } else if limit < self.sizing.0.min() - self.current_width {
-                    shrunk = self.sizing.0.min() - self.current_width;
-                    self.shrinkable = false; // No more shrinking possible
-                } else {
-                    shrunk = limit;
-                }
-                self.current_width += shrunk;
-                shrunk
+            amount
+        } else if self.shrinkable && amount < 0.0 {
+            self.current_width += amount;
+            if amount != limit {
+                self.shrinkable = false; // No more shrinking possible
             }
+            amount
+        } else {
+            // no more change possible at all
+            self.growable_width = false;
+            self.shrinkable = false;
+            0.0
         }
     }
 
@@ -148,31 +94,22 @@ where
     /// constrained by its maximum size.
     fn grow_height(&mut self, limit: f64) -> f64 {
         debug_assert!(limit > 0.0, "Height can only grow, never shrink");
-        match self.element {
-            KaolinElement::Flex(..) => {
-                let grown;
-                if limit > self.sizing.1.max() - self.current_height {
-                    grown = self.sizing.1.max() - self.current_height;
-                    self.growable_height = false; // No more growth possible
-                } else {
-                    grown = limit;
-                }
-
-                self.current_height += grown;
-                self.current_height = self.current_height.min(self.sizing.1.max());
-                grown
+        let amount = self.sizing.1.clamped(self.current_height + limit) - self.current_height;
+        if self.growable_height && amount > 0.0 {
+            self.current_height += amount;
+            if amount != limit {
+                self.growable_height = false; // No more growth possible
             }
-            _ => 0.0,
+            amount
+        } else {
+            0.0
         }
     }
 
     /// Fits the height of the element to its content.
-    fn fit_height(&mut self) {
+    fn fit_height(&mut self, final_width: f64) {
         let height = self.sizing.1;
-        if let KaolinElement::Flex(ref mut flex_box) = self.element {
-            self.current_height = height
-                .clamped(flex_box.fit_height_to_children(self.current_height, height.max.into()));
-        }
+        self.current_height = height.clamped(self.element.fit_height_unbound(final_width));
     }
 
     /// ### Sets the position of the element, and propagates the change to its children.
@@ -180,50 +117,25 @@ where
     pub fn set_position(&mut self, x: f64, y: f64) {
         self.x = x;
         self.y = y;
-        if let KaolinElement::Flex(ref mut flex_box) = self.element {
-            flex_box.position_children((x, x + self.current_width, y, y + self.current_height));
-        }
+        self.element
+            .propagate_position((x, y), (self.current_width, self.current_height));
     }
 
     /// Renders the element and its children into a series of rendering commands.
-    pub fn render(
-        &self,
-        inherited_color: Color,
-    ) -> Box<dyn Iterator<Item = RenderCommand<Color>> + '_> {
-        match &self.element {
-            KaolinElement::Flex(flex_box) => Box::new(
-                flex_box.render(
-                    RenderCommand::DrawRectangle {
-                        id: self.id.clone(),
-                        x: self.x,
-                        y: self.y,
-                        width: self.current_width,
-                        height: self.current_height,
-                        color: flex_box
-                            .style
-                            .background_color
-                            .unwrap_or(Color::default_background_color()),
-                        corner_radius: flex_box.style.corner_radius,
-                        border: flex_box.style.border,
-                    },
-                    inherited_color,
-                ),
-            ),
-            KaolinElement::Text(text_element) => {
-                Box::new(text_element.render(self.x, self.y, inherited_color))
-            }
-        }
+    pub fn render(&self) -> Box<dyn Iterator<Item = RenderCommand<Color>> + '_> {
+        self.element
+            .render((self.x, self.y), (self.current_width, self.current_height))
     }
 }
 
-pub(crate) struct KaolinNodes<'frame, Color>
+pub(crate) struct KaolinNodes<Color>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
 {
-    pub(crate) nodes: Vec<KaolinNode<'frame, Color>>,
+    pub(crate) nodes: Vec<KaolinNode<Color>>,
 }
 
-impl<'frame, Color> KaolinNodes<'frame, Color>
+impl<Color> KaolinNodes<Color>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
 {
@@ -232,17 +144,17 @@ where
     }
 
     /// Add a new child
-    fn push(&mut self, node: KaolinNode<'frame, Color>) {
+    fn push(&mut self, node: KaolinNode<Color>) {
         self.nodes.push(node);
     }
 
     /// Returns an array of mutable references of all growable children in the horizontal direction.
-    fn get_growable_children_w(&mut self) -> Vec<&mut KaolinNode<'frame, Color>> {
+    fn get_growable_children_w(&mut self) -> Vec<&mut KaolinNode<Color>> {
         self.nodes.iter_mut().filter(|c| c.growable_width).collect()
     }
 
     /// Returns an array of mutable references of all growable children in the vertical direction.
-    fn get_growable_children_h(&mut self) -> Vec<&mut KaolinNode<'frame, Color>> {
+    fn get_growable_children_h(&mut self) -> Vec<&mut KaolinNode<Color>> {
         self.nodes
             .iter_mut()
             .filter(|c| c.growable_height)
@@ -250,13 +162,13 @@ where
     }
 
     /// Returns an array of mutable references of all shrinkable children.
-    fn get_shrinkable_children(&mut self) -> Vec<&mut KaolinNode<'frame, Color>> {
+    fn get_shrinkable_children(&mut self) -> Vec<&mut KaolinNode<Color>> {
         self.nodes.iter_mut().filter(|c| c.shrinkable).collect()
     }
 
     /// Looks for the smallest and second smallest widths among the children.
     /// Important to make sure all children grow together.
-    fn get_smallest_widths(children: &Vec<&mut KaolinNode<'frame, Color>>) -> (f64, f64) {
+    fn get_smallest_widths(children: &Vec<&mut KaolinNode<Color>>) -> (f64, f64) {
         let mut smallest = f64::INFINITY;
         let mut second_smallest = f64::INFINITY;
         for node in children {
@@ -272,7 +184,7 @@ where
 
     /// Looks for the smallest and second smallest heights among the children.
     /// Important to make sure all children grow together.
-    fn get_smallest_heights(children: &Vec<&mut KaolinNode<'frame, Color>>) -> (f64, f64) {
+    fn get_smallest_heights(children: &Vec<&mut KaolinNode<Color>>) -> (f64, f64) {
         let mut smallest = f64::INFINITY;
         let mut second_smallest = f64::INFINITY;
         for node in children {
@@ -288,7 +200,7 @@ where
 
     /// Looks for the biggest and second biggest widths among the children.
     /// Important to make sure all children grow together.
-    fn get_biggest_widths(children: &Vec<&mut KaolinNode<'frame, Color>>) -> (f64, f64) {
+    fn get_biggest_widths(children: &Vec<&mut KaolinNode<Color>>) -> (f64, f64) {
         let mut biggest = 0.0;
         let mut second_biggest = 0.0;
         for node in children {
@@ -327,46 +239,34 @@ where
     }
 
     /// Returns an iterator over the child nodes.
-    fn nodes(&mut self) -> impl Iterator<Item = &mut KaolinNode<'frame, Color>> {
+    fn nodes(&mut self) -> impl Iterator<Item = &mut KaolinNode<Color>> {
         self.nodes.iter_mut()
     }
 
     /// Propagates the width growth of the element to its children.
-    pub fn do_grow_width(&mut self) {
-        self.nodes.iter_mut().for_each(|c| match c.element {
-            KaolinElement::Flex(ref mut flex_box) => {
-                flex_box.grow_children_width(c.current_width);
-                c.fit_height(); // height fit depends on children (text elements will wrap upon width growth)
+    pub fn propagate_width_growth(&mut self) {
+        self.nodes().for_each(|c| {
+            if let Some(container) = c.element.as_container() {
+                container.propagate_width_growth(c.current_width);
             }
-            KaolinElement::Text(ref mut text_element) => {
-                c.current_height = text_element.wrap_text(c.current_width); // height gets fit to the text itself
-            }
+            c.fit_height(c.current_width);
         });
     }
 
     /// Propagates the height growth of the element to its children.
     pub fn do_grow_height(&mut self) {
-        self.nodes.iter_mut().for_each(|c| {
-            if let KaolinElement::Flex(ref mut flex_box) = c.element {
-                flex_box.grow_children_height(c.current_height);
+        self.nodes.iter_mut().for_each(|node| {
+            if let Some(container) = node.element.as_container() {
+                container.propagate_height_growth(node.current_height);
             }
         });
     }
 
-    /// The number of children.
-    #[allow(dead_code)]
-    pub fn len(&self) -> usize {
-        self.nodes.len()
-    }
-
-    pub fn render_nodes(
-        &self,
-        inherited_color: Color,
-    ) -> Box<dyn Iterator<Item = RenderCommand<Color>> + '_> {
+    pub fn render_nodes(&self) -> Box<dyn Iterator<Item = RenderCommand<Color>> + '_> {
         Box::new(
             self.nodes
                 .iter()
-                .flat_map(move |node| node.render(inherited_color)),
+                .flat_map(|node: &KaolinNode<Color>| node.render()),
         )
     }
 

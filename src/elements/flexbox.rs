@@ -2,29 +2,35 @@ use core::{cmp::min_by, ops::Add};
 
 use crate::{
     commands::{RenderCommand, RenderCommands},
-    elements::{KaolinElement, KaolinNode, KaolinNodes},
+    elements::{
+        KaolinNode, KaolinNodes,
+        traits::{KaolinContainerElement, KaolinElement},
+    },
     style::{
         FlexStyle,
         layout::{Alignment, Direction, Justification},
+        sizing::SizingDimensions,
     },
 };
 
-pub struct FlexBox<'frame, Color>
+pub(crate) struct FlexBox<Color>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
 {
-    pub style: FlexStyle<Color>,
-    pub(crate) children: KaolinNodes<'frame, Color>,
+    style: FlexStyle<Color>,
+    pub(crate) children: KaolinNodes<Color>,
+    pub(crate) inherited_color: Option<Color>,
 }
 
-impl<'frame, Color> FlexBox<'frame, Color>
+impl<Color> FlexBox<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color> + 'static,
 {
     pub fn new(style: FlexStyle<Color>) -> Self {
         FlexBox {
             style,
             children: KaolinNodes::new(),
+            inherited_color: None,
         }
     }
 
@@ -33,7 +39,7 @@ where
     }
 
     /// Fits the width of the flex container to its children, returning the new width.
-    pub fn fit_width_to_children(&self) -> f64 {
+    fn fit_width_to_children(&self) -> f64 {
         match self.style.layout.direction {
             Direction::LeftToRight | Direction::RightToLeft => {
                 self.children.get_cumulative_width()
@@ -47,7 +53,7 @@ where
     }
 
     /// Grows the width of all child elements to fit the container.
-    pub fn grow_children_width(&mut self, current_width: f64) {
+    pub(crate) fn grow_children_width(&mut self, current_width: f64) {
         if self.style.has_horizontal_layout() {
             let cum_width = self.children.get_cumulative_width(); // lmao
             let mut remaining =
@@ -135,28 +141,11 @@ where
                 child.growable_width = false; // Once grown, they can't grow anymore
             });
         }
-        self.children.do_grow_width();
-    }
-
-    /// Fits the height of the flex container to its children, returning the new height.
-    pub fn fit_height_to_children(&mut self, mut current_height: f64, max: f64) -> f64 {
-        if self.style.has_horizontal_layout() {
-            current_height = self
-                .children
-                .get_max_height()
-                .add(self.style.padding.y())
-                .min(max);
-        } else {
-            current_height += self.children.get_cumulative_height();
-            current_height += self.get_cumulative_gaps();
-            current_height += self.style.padding.y();
-            current_height = current_height.min(max);
-        }
-        current_height
+        self.children.propagate_width_growth();
     }
 
     /// Grows the height of all child elements to fit the container.
-    pub fn grow_children_height(&mut self, current_height: f64) {
+    pub(crate) fn grow_children_height(&mut self, current_height: f64) {
         if self.style.has_horizontal_layout() {
             self.children.nodes().for_each(|child| {
                 let remaining = current_height - child.current_height - self.style.padding.y();
@@ -201,7 +190,7 @@ where
 
     /// Positions the child elements within the flex container.
     /// Called after all sizing calculations are complete.
-    pub fn position_children(&mut self, offsets: (f64, f64, f64, f64)) {
+    pub(crate) fn position_children(&mut self, offsets: (f64, f64, f64, f64)) {
         let (left, right, top, bottom) = offsets;
 
         let (tot_main_dimension, tot_cross_dimension) =
@@ -279,26 +268,84 @@ where
         }
     }
 
-    /// Adds a new child to the flex container.
-    pub fn add_child(&mut self, child: KaolinElement<'frame, Color>) {
-        self.children.push(KaolinNode::new(child, None));
-    }
-
-    /// Creates an iterator representing all render commands for itself and its children in order.
-    pub fn render(
-        &self,
-        self_command: RenderCommand<Color>,
-        inherited_color: Color,
-    ) -> impl Iterator<Item = RenderCommand<Color>> {
-        std::iter::once(self_command).chain(
-            self.children
-                .render_nodes(self.style.color.unwrap_or(inherited_color)),
-        )
-    }
-
     /// Consumes the root flex container and all of its children in the element
     /// tree, producing a series of rendering commands.
-    pub fn conclude(self) -> RenderCommands<Color> {
+    pub(crate) fn conclude(self) -> RenderCommands<Color> {
         RenderCommands::new(self)
+    }
+}
+
+impl<Color> KaolinElement<Color> for FlexBox<Color>
+where
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color> + 'static,
+{
+    fn inherit_color(&mut self, inherited_color: Color) {
+        self.inherited_color = Some(self.style.color.unwrap_or(inherited_color));
+    }
+
+    fn get_sizing_dimensions(&self) -> (SizingDimensions, SizingDimensions) {
+        let width = SizingDimensions::from(self.style.sizing.width);
+        let height = SizingDimensions::from(self.style.sizing.height);
+        (width, height)
+    }
+
+    fn fit_height_unbound(&mut self, _final_width: f64) -> f64 {
+        if self.style.has_horizontal_layout() {
+            self.children.get_max_height().add(self.style.padding.y())
+        } else {
+            self.children.get_cumulative_height()
+                + self.get_cumulative_gaps()
+                + self.style.padding.y()
+        }
+    }
+
+    fn starting_width(&self, sizing: &SizingDimensions) -> f64 {
+        sizing.clamped(self.fit_width_to_children())
+    }
+
+    fn propagate_position(&mut self, offsets: (f64, f64), size: (f64, f64)) {
+        self.position_children((offsets.0, offsets.0 + size.0, offsets.1, offsets.1 + size.1));
+    }
+
+    fn render(
+        &self,
+        offsets: (f64, f64),
+        size: (f64, f64),
+    ) -> Box<dyn Iterator<Item = RenderCommand<Color>> + '_> {
+        let self_command = RenderCommand::DrawRectangle {
+            id: "".to_string(),
+            x: offsets.0,
+            y: offsets.1,
+            width: size.0,
+            height: size.1,
+            color: self
+                .style
+                .background_color
+                .unwrap_or(Color::default_background_color()),
+            corner_radius: self.style.corner_radius,
+            border: self.style.border,
+        };
+        Box::new(std::iter::once(self_command).chain(self.children.render_nodes()))
+    }
+
+    fn as_container(&mut self) -> Option<&mut dyn KaolinContainerElement<Color>> {
+        Some(self)
+    }
+}
+
+impl<Color> KaolinContainerElement<Color> for FlexBox<Color>
+where
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color> + 'static,
+{
+    fn add_child(&mut self, child: KaolinNode<Color>) {
+        self.children.push(child);
+    }
+
+    fn propagate_width_growth(&mut self, parent_width: f64) {
+        self.grow_children_width(parent_width);
+    }
+
+    fn propagate_height_growth(&mut self, parent_height: f64) {
+        self.grow_children_height(parent_height);
     }
 }

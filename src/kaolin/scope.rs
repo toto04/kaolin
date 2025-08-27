@@ -1,30 +1,32 @@
 use crate::{
-    elements::{KaolinElement, flexbox::FlexBox, text::TextElement},
-    kaolin::MeasureTextFn,
+    elements::{
+        KaolinNode,
+        flexbox::FlexBox,
+        text::TextElement,
+        traits::{KaolinContainerElement, KaolinElement},
+    },
+    kaolin::MeasureTextFnRef,
     style::{FlexStyle, TextStyle},
 };
 
-pub struct KaolinScope<'frame, Color>
+pub struct KaolinScope<Color>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
 {
-    flex: FlexBox<'frame, Color>,
-    pub(crate) measure_text: &'frame MeasureTextFn<'frame, Color>,
+    flex: FlexBox<Color>,
+    measure_text: MeasureTextFnRef<Color>,
 }
 
-impl<'frame, Color> KaolinScope<'frame, Color>
+impl<Color> KaolinScope<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color> + 'static,
 {
     /// Creates a new root scope, this is where the layout tree begins.
     /// ### This should not be used externally, if you are looking for a way to create a new child element with its own scope, see [KaolinScope::with].
     ///
     /// A new scope is also created for each child flex container, iteratively
     /// allowing for nested layouts.
-    pub(super) fn new(
-        flex: FlexBox<'frame, Color>,
-        measure_text: &'frame MeasureTextFn<'frame, Color>,
-    ) -> Self {
+    pub(super) fn new(flex: FlexBox<Color>, measure_text: MeasureTextFnRef<Color>) -> Self {
         KaolinScope { flex, measure_text }
     }
 
@@ -32,7 +34,7 @@ where
     /// This function is called internally when the component tree definition is
     /// completed, allowing the root element to access the finalized layout, consuming
     /// the scope in the process.
-    pub(super) fn conclude(self) -> FlexBox<'frame, Color> {
+    pub(super) fn conclude(self) -> FlexBox<Color> {
         self.flex
     }
 
@@ -55,13 +57,18 @@ where
     pub fn with(
         mut self,
         style: FlexStyle<Color>,
-        contents: impl Fn(KaolinScope<'frame, Color>) -> KaolinScope<'frame, Color>,
+        contents: impl Fn(KaolinScope<Color>) -> KaolinScope<Color>,
     ) -> Self {
-        let child_flex = FlexBox::new(style);
-        let child_scope = KaolinScope::new(child_flex, self.measure_text);
+        let mut child_flex = FlexBox::new(style);
+        let color = style
+            .color
+            .or(self.flex.inherited_color)
+            .unwrap_or(Color::default_foreground_color());
+        child_flex.inherit_color(color);
+        let child_scope = KaolinScope::new(child_flex, self.measure_text.clone());
         let modified_scope = contents(child_scope);
         let child_flex = modified_scope.conclude();
-        self.flex.add_child(KaolinElement::Flex(child_flex));
+        self.flex.add_child(KaolinNode::new(child_flex, None));
         self
     }
 
@@ -78,8 +85,13 @@ where
     /// k.text("Hello, world!", TextStyle::new()) // new text element inside the flex container
     /// ```
     pub fn text(mut self, content: &str, style: TextStyle<Color>) -> Self {
-        let text_element = TextElement::new(content, style, self.measure_text);
-        self.flex.add_child(KaolinElement::Text(text_element));
+        let mut text_element = TextElement::new(content, style, self.measure_text.clone());
+        text_element.inherit_color(
+            self.flex
+                .inherited_color
+                .unwrap_or(Color::default_foreground_color()),
+        );
+        self.flex.add_child(KaolinNode::new(text_element, None));
         self
     }
 }

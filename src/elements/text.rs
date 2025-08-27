@@ -1,28 +1,38 @@
 use std::iter;
 
+use typed_floats::tf64::Positive;
 use unicode_segmentation::UnicodeSegmentation;
 
-use crate::{commands::RenderCommand, kaolin::MeasureTextFn, style::TextStyle};
+use crate::{
+    commands::RenderCommand,
+    elements::traits::{KaolinContainerElement, KaolinElement},
+    kaolin::MeasureTextFnRef,
+    style::{
+        TextStyle,
+        sizing::{PreferredSize, SizingDimensions},
+    },
+};
 
 /// Represents a text element in the UI.
-pub struct TextElement<'frame, Color>
+pub struct TextElement<Color>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
 {
     content: String,
     style: TextStyle<Color>,
     lines: Vec<(usize, usize)>, // (start, end) indices of lines in content
-    measure_text: &'frame MeasureTextFn<'frame, Color>, // measure text function
+    measure_text: MeasureTextFnRef<Color>,
+    inherited_color: Option<Color>, // measure text function
 }
 
-impl<'frame, Color> TextElement<'frame, Color>
+impl<Color> TextElement<Color>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
 {
     pub fn new(
         content: &str,
         style: TextStyle<Color>,
-        measure_text: &'frame MeasureTextFn<'frame, Color>,
+        measure_text: MeasureTextFnRef<Color>,
     ) -> Self {
         let lines = Vec::new();
         TextElement {
@@ -30,6 +40,15 @@ where
             style,
             lines,
             measure_text,
+            inherited_color: None,
+        }
+    }
+
+    fn measure_text(&self, text: &str) -> (f64, f64) {
+        if let Some(measure_text) = self.measure_text.upgrade() {
+            (measure_text)(text, &self.style)
+        } else {
+            (0.0, 0.0)
         }
     }
 
@@ -44,7 +63,7 @@ where
             self.content
                 .lines()
                 .fold((0.0f64, 0.0f64), |(max_width, total_height), line| {
-                    let (width, height) = (self.measure_text)(line, &self.style);
+                    let (width, height) = self.measure_text(line);
                     (max_width.max(width), total_height + height)
                 });
         (
@@ -63,7 +82,7 @@ where
         let floats = self.content.split_whitespace().fold(
             (0.0f64, 0.0f64),
             |(min_width, min_height), word| {
-                let (width, height) = (self.measure_text)(word, &self.style);
+                let (width, height) = self.measure_text(word);
                 (min_width.max(width), min_height.max(height))
             },
         );
@@ -108,7 +127,7 @@ where
                 // if we wrap, we should check the new word again
                 loop {
                     let slice = self.content[start..next_word_start].trim_end();
-                    let (width, height) = (self.measure_text)(slice, &self.style);
+                    let (width, height) = self.measure_text(slice);
 
                     if start < prev_last && width > current_width {
                         // it's a wrap!
@@ -128,39 +147,84 @@ where
         let last_slice = &self.content[start..].trim_end();
         if !last_slice.is_empty() {
             self.lines.push((start, last_slice.len() + start));
-            let (_, height) = (self.measure_text)(last_slice, &self.style);
+            let (_, height) = self.measure_text(last_slice);
             total_height += height;
         }
         total_height
     }
+}
 
-    /// Renders the text element, returning an iterator of rendering commands,
-    /// one for each line of text.
-    pub fn render(
+impl<Color> KaolinElement<Color> for TextElement<Color>
+where
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+{
+    fn get_sizing_dimensions(&self) -> (SizingDimensions, SizingDimensions) {
+        let (pref_width, pref_height) = self.get_preferred_size();
+        let width = SizingDimensions {
+            min: self.get_minimum_size().0,
+            preferred: PreferredSize::Fixed(pref_width),
+            max: pref_width.into(),
+        };
+        let height = SizingDimensions {
+            min: pref_height,
+            preferred: PreferredSize::Fixed(pref_height),
+            max: Positive::new(f64::INFINITY).unwrap(),
+        };
+        (width, height)
+    }
+
+    fn render(
         &self,
-        x: f64,
-        y: f64,
-        inherited_color: Color,
-    ) -> impl Iterator<Item = RenderCommand<Color>> {
-        let mut current_y = y;
-        self.lines.iter().filter_map(move |line_indices| {
+        offsets: (f64, f64),
+        _size: (f64, f64),
+    ) -> Box<dyn Iterator<Item = RenderCommand<Color>> + '_> {
+        let mut current_y = offsets.1;
+        Box::new(self.lines.iter().filter_map(move |line_indices| {
             let (start, end) = *line_indices;
             let line = self.content[start..end].trim();
             if line.is_empty() {
                 return None;
             }
-            let (_, height) = (self.measure_text)(line, &self.style);
+            let (_, height) = self.measure_text(line);
             let y = current_y;
             current_y += height;
 
             Some(RenderCommand::DrawText {
                 text: line.to_string(),
-                x,
+                x: offsets.0,
                 y,
                 font_id: self.style.font_id,
                 font_size: self.style.font_size,
-                color: self.style.color.unwrap_or(inherited_color),
+                color: self
+                    .style
+                    .color
+                    .or(self.inherited_color)
+                    .unwrap_or(Color::default_foreground_color()),
             })
-        })
+        }))
+    }
+
+    fn default_growable_width(&self, _sizing: &crate::style::sizing::SizingDimensions) -> bool {
+        false
+    }
+
+    fn default_shrinkable(&self, _sizing: &crate::style::sizing::SizingDimensions) -> bool {
+        true
+    }
+
+    fn default_growable_height(&self, _sizing: &crate::style::sizing::SizingDimensions) -> bool {
+        false
+    }
+
+    fn fit_height_unbound(&mut self, final_width: f64) -> f64 {
+        self.wrap_text(final_width)
+    }
+
+    fn inherit_color(&mut self, inherited_color: Color) {
+        self.inherited_color = Some(inherited_color);
+    }
+
+    fn as_container(&mut self) -> Option<&mut dyn KaolinContainerElement<Color>> {
+        None
     }
 }

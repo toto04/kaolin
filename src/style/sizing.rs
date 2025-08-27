@@ -61,7 +61,27 @@ impl SizingDimensions {
     }
 
     /// Returns the dimension value clamped between min and max.
+    ///
+    /// ```
+    /// # use typed_floats::tf64::{Positive, PositiveFinite};
+    /// # use kaolin::style::sizing::{SizingDimensions, PreferredSize};
+    /// let sized = SizingDimensions {
+    ///     min: PositiveFinite::new(100.0).unwrap(),
+    ///     preferred: PreferredSize::Fixed(PositiveFinite::new(200.0).unwrap()),
+    ///     max: Positive::new(300.0).unwrap(),
+    /// };
+    /// assert_eq!(sized.clamped(250.0), 250.0);
+    /// assert_eq!(sized.clamped(50.0), 100.0);
+    /// assert_eq!(sized.clamped(350.0), 300.0);
+    ///
+    /// assert_eq!(sized.clamped(f64::NAN), 100.0); // NaN defaults to min
+    /// assert_eq!(sized.clamped(f64::INFINITY), 300.0);
+    /// assert_eq!(sized.clamped(f64::NEG_INFINITY), 100.0);
+    /// ```
     pub fn clamped(&self, value: f64) -> f64 {
+        if value.is_nan() {
+            return self.min.into(); // Default to min if value is NaN
+        }
         value.clamp(self.min.into(), self.max.into())
     }
 

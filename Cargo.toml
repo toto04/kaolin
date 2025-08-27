@@ -1,6 +1,6 @@
 [package]
 name = "kaolin"
-version = "0.1.8"
+version = "0.1.9"
 edition = "2024"
 description = "A Rust library for flexible layouts, inspired by Clay"
 license-file = "LICENSE"

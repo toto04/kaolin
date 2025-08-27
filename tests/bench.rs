@@ -5,15 +5,15 @@ use kaolin::{
     Kaolin, fit, fixed, grow, sizing,
     style::{FlexStyle, TextStyle},
 };
-use test::Bencher;
+use test::{Bencher, black_box};
 
 mod common;
 use common::*;
 
 #[bench]
 fn bench_text_wrapping(b: &mut Bencher) {
+    let kaolin = Kaolin::new((800, 600), measure_text);
     b.iter(|| {
-        let kaolin = Kaolin::new((800, 600), measure_text);
         let commands = kaolin.draw(|k| {
             k.with(
                 FlexStyle::new().sizing(sizing!(fixed!(100.0), fit!())),
@@ -26,14 +26,14 @@ fn bench_text_wrapping(b: &mut Bencher) {
                 k.text("This is a long text that should wrap", TextStyle::new())
             })
         });
-        commands.collect::<Vec<_>>()
+        black_box(commands.collect::<Vec<_>>());
     });
 }
 
 mod clay_bench {
     extern crate clay_layout;
     extern crate test;
-    use test::Bencher;
+    use test::{Bencher, black_box};
 
     use clay_layout::{Clay, Declaration, fixed, grow, math::Dimensions, text::TextConfig};
 
@@ -43,11 +43,10 @@ mod clay_bench {
 
     #[bench]
     fn clay_same_layout(b: &mut Bencher) {
+        // Create the clay instance
+        let mut clay: Clay = Clay::new((800., 600.).into());
+        clay.set_measure_text_function(measure_text);
         b.iter(|| {
-            // Create the clay instance
-            let mut clay = Clay::new((800., 600.).into());
-            clay.set_measure_text_function(measure_text);
-
             // Begin the layout
             let mut clay = clay.begin::<(), ()>();
 
@@ -86,7 +85,7 @@ mod clay_bench {
                 },
             );
 
-            let _render_commands = clay.end();
+            black_box(clay.end().collect::<Vec<_>>());
         });
     }
 }
