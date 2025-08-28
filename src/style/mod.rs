@@ -28,7 +28,7 @@ where
 #[derive(DefaultConstructor, Clone, Copy, Setters)]
 pub struct FlexStyle<Color>
 where
-    Color: std::default::Default + Copy + PartialEq + KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + KaolinColor<Color>,
 {
     /// Set the text color to be inherited by default by all child elements
     #[setters(strip_option)]

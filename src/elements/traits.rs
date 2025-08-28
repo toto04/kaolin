@@ -1,3 +1,5 @@
+use alloc::boxed::Box;
+
 use crate::elements::KaolinNode;
 use crate::elements::RenderCommand;
 use crate::style::sizing::PreferredSize;

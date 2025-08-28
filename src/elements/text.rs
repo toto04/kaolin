@@ -1,5 +1,8 @@
-use std::iter;
-
+use alloc::{
+    boxed::Box,
+    string::{String, ToString},
+    vec::Vec,
+};
 use typed_floats::tf64::Positive;
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -105,7 +108,7 @@ where
             .unicode_word_indices()
             .skip(1) // the first word has to be in the first line duh
             .map(|(i, _)| i)
-            .chain(iter::once(self.content.len())); // end of the content as last "next word index"
+            .chain(core::iter::once(self.content.len())); // end of the content as last "next word index"
 
         // the current start of the slice
         let mut start = 0;

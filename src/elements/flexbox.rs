@@ -1,5 +1,7 @@
 use core::{cmp::min_by, ops::Add};
 
+use alloc::{boxed::Box, string::ToString, vec::Vec};
+
 use crate::{
     commands::{RenderCommand, RenderCommands},
     elements::{
@@ -325,7 +327,7 @@ where
             corner_radius: self.style.corner_radius,
             border: self.style.border,
         };
-        Box::new(std::iter::once(self_command).chain(self.children.render_nodes()))
+        Box::new(core::iter::once(self_command).chain(self.children.render_nodes()))
     }
 
     fn as_container(&mut self) -> Option<&mut dyn KaolinContainerElement<Color>> {

@@ -1,3 +1,6 @@
+#![no_std]
+extern crate alloc;
+
 /// Definitions of the rendering commands that will be used to draw the UI elements.
 pub mod commands;
 

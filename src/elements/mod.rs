@@ -7,6 +7,11 @@ use crate::{
     elements::traits::KaolinElement,
     style::sizing::{PreferredSize, SizingDimensions},
 };
+use alloc::{
+    boxed::Box,
+    string::{String, ToString},
+    vec::Vec,
+};
 use uuid::Uuid;
 
 pub(crate) struct KaolinNode<Color>
