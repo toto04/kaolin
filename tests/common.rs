@@ -9,7 +9,7 @@ pub enum TestColor {
     Red,
 }
 
-impl KaolinColor<TestColor> for TestColor {
+impl KaolinColor for TestColor {
     fn default_foreground_color() -> Self {
         TestColor::Black
     }

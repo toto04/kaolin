@@ -11,7 +11,7 @@ use crate::style::sizing::SizingDimensions;
 /// methods to handle layout, rendering, and interaction.
 pub trait KaolinElement<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     /// This function gets called to initialize a [`KaolinNode`] with the element's sizing information.
     /// See [`SizingDimensions`] for more details.
@@ -105,7 +105,7 @@ where
 /// ```
 pub trait KaolinContainerElement<Color>: KaolinElement<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     /// Adds a child node to the container.
     fn add_child(&mut self, child: KaolinNode<Color>);

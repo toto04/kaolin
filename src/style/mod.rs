@@ -10,17 +10,14 @@ use crate::style::layout::Layout;
 use crate::style::padding::Padding;
 use crate::style::sizing::BoxSizing;
 
-pub trait KaolinColor<Color>
-where
-    Color: Default + Copy + PartialEq,
-{
+pub trait KaolinColor: Default + Copy + PartialEq {
     /// default color for things like text and borders.
-    fn default_foreground_color() -> Color {
-        Color::default()
+    fn default_foreground_color() -> Self {
+        Self::default()
     }
     /// default color for background for flex containers.
-    fn default_background_color() -> Color {
-        Color::default()
+    fn default_background_color() -> Self {
+        Self::default()
     }
 }
 
@@ -28,7 +25,7 @@ where
 #[derive(DefaultConstructor, Clone, Copy, Setters)]
 pub struct FlexStyle<Color>
 where
-    Color: Default + Copy + PartialEq + KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + KaolinColor,
 {
     /// Set the text color to be inherited by default by all child elements
     #[setters(strip_option)]
@@ -50,7 +47,7 @@ where
 
 impl<Color> Default for FlexStyle<Color>
 where
-    Color: Default + Copy + PartialEq + KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + KaolinColor,
 {
     fn default() -> Self {
         FlexStyle {
@@ -67,7 +64,7 @@ where
 
 impl<Color> FlexStyle<Color>
 where
-    Color: Default + Copy + PartialEq + KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + KaolinColor,
 {
     #[inline]
     pub fn has_horizontal_layout(&self) -> bool {
@@ -88,7 +85,7 @@ where
 #[derive(DefaultConstructor, Debug, Clone, Copy, PartialEq, Setters)]
 pub struct TextStyle<Color>
 where
-    Color: Default + Copy + PartialEq + KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + KaolinColor,
 {
     /// The ID of the font to use for the text element. Intepretation depends on the renderer.
     pub font_id: u32,
@@ -101,7 +98,7 @@ where
 
 impl<Color> Default for TextStyle<Color>
 where
-    Color: Default + Copy + PartialEq + KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + KaolinColor,
 {
     fn default() -> Self {
         TextStyle {

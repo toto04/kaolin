@@ -16,7 +16,7 @@ use uuid::Uuid;
 
 pub(crate) struct KaolinNode<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     #[allow(dead_code)]
     id: String,
@@ -33,7 +33,7 @@ where
 
 impl<Color> KaolinNode<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     pub(crate) fn new(element: impl KaolinElement<Color> + 'static, id: Option<String>) -> Self {
         let id = id.unwrap_or_else(|| Uuid::new_v4().to_string());
@@ -135,14 +135,14 @@ where
 
 pub(crate) struct KaolinNodes<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     pub(crate) nodes: Vec<KaolinNode<Color>>,
 }
 
 impl<Color> KaolinNodes<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     fn new() -> Self {
         KaolinNodes { nodes: Vec::new() }

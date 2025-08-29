@@ -17,7 +17,7 @@ use crate::{
 
 pub(crate) struct FlexBox<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     style: FlexStyle<Color>,
     pub(crate) children: KaolinNodes<Color>,
@@ -26,7 +26,7 @@ where
 
 impl<Color> FlexBox<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color> + 'static,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor + 'static,
 {
     pub fn new(style: FlexStyle<Color>) -> Self {
         FlexBox {
@@ -279,7 +279,7 @@ where
 
 impl<Color> KaolinElement<Color> for FlexBox<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color> + 'static,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor + 'static,
 {
     fn inherit_color(&mut self, inherited_color: Color) {
         self.inherited_color = Some(self.style.color.unwrap_or(inherited_color));
@@ -337,7 +337,7 @@ where
 
 impl<Color> KaolinContainerElement<Color> for FlexBox<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color> + 'static,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor + 'static,
 {
     fn add_child(&mut self, child: KaolinNode<Color>) {
         self.children.push(child);

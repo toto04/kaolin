@@ -5,7 +5,7 @@ use derive_setters::Setters;
 #[derive(Debug, Clone, Copy, PartialEq, Setters, DefaultConstructor)]
 pub struct Border<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     pub width: f32,
     pub color: Color,
@@ -13,7 +13,7 @@ where
 
 impl<Color> Default for Border<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     fn default() -> Self {
         Border {

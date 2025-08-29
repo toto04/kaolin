@@ -26,3 +26,13 @@ embedded = ["dep:embedded-graphics", "dep:u8g2-fonts"]
 
 [dev-dependencies]
 clay-layout = { version = "0.4.0" }
+embedded-graphics-simulator = "0.7.0"
+
+
+[[example]]
+name = "embedded"
+required-features = ["embedded"]
+
+[[example]]
+name = "raylib"
+required-features = ["raylib"]

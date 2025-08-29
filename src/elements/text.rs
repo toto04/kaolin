@@ -19,7 +19,7 @@ use crate::{
 /// Represents a text element in the UI.
 pub struct TextElement<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     content: String,
     style: TextStyle<Color>,
@@ -30,7 +30,7 @@ where
 
 impl<Color> TextElement<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     pub fn new(
         content: &str,
@@ -159,7 +159,7 @@ where
 
 impl<Color> KaolinElement<Color> for TextElement<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     fn get_sizing_dimensions(&self) -> (SizingDimensions, SizingDimensions) {
         let (pref_width, pref_height) = self.get_preferred_size();

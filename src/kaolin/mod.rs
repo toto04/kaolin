@@ -17,7 +17,7 @@ pub(crate) type MeasureTextFnRef<Color> = Weak<MeasureTextFnStatic<Color>>;
 
 pub struct Kaolin<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color> + 'static,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor + 'static,
 {
     width: f64,
     height: f64,
@@ -26,7 +26,7 @@ where
 
 impl<Color> Kaolin<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color> + 'static,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor + 'static,
 {
     /// Creates a new instance of Kaolin with the specified window dimensions and text measurement function.
     pub fn new(

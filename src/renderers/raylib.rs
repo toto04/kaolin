@@ -11,41 +11,20 @@ use crate::{
     renderers::KaolinRenderer,
     style::{KaolinColor, TextStyle},
 };
-use raylib::prelude::*;
+use raylib::{color::Color, prelude::*};
 
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
-struct KRaylibColor {
-    inner: raylib::color::Color,
-}
-
-impl From<KRaylibColor> for raylib::color::Color {
-    fn from(value: KRaylibColor) -> Self {
-        value.inner
-    }
-}
-
-impl From<raylib::color::Color> for KRaylibColor {
-    fn from(value: raylib::color::Color) -> Self {
-        KRaylibColor { inner: value }
-    }
-}
-
-impl KaolinColor<KRaylibColor> for KRaylibColor {
-    fn default_foreground_color() -> KRaylibColor {
-        KRaylibColor {
-            inner: raylib::color::Color::BLACK,
-        }
+impl KaolinColor for Color {
+    fn default_foreground_color() -> Self {
+        Color::BLACK
     }
 
-    fn default_background_color() -> KRaylibColor {
-        KRaylibColor {
-            inner: raylib::color::Color::WHITE,
-        }
+    fn default_background_color() -> Self {
+        Color::WHITE
     }
 }
 
 pub struct RaylibRenderer {
-    kaolin: Kaolin<KRaylibColor>,
+    kaolin: Kaolin<Color>,
     raylib: Rc<RefCell<RaylibHandle>>,
     thread: RaylibThread,
 }
@@ -54,7 +33,7 @@ impl RaylibRenderer {
     fn measure_text(
         this: Weak<RefCell<RaylibHandle>>,
         text: &str,
-        config: &TextStyle<KRaylibColor>,
+        config: &TextStyle<Color>,
     ) -> (f64, f64) {
         let raylib = this.upgrade().unwrap();
         let raylib = raylib.borrow();
@@ -85,8 +64,8 @@ impl RaylibRenderer {
     }
 }
 
-impl KaolinRenderer<KRaylibColor> for RaylibRenderer {
-    fn draw(&mut self, draw_fn: impl Fn(KaolinScope<KRaylibColor>) -> KaolinScope<KRaylibColor>) {
+impl KaolinRenderer<Color> for RaylibRenderer {
+    fn draw(&mut self, draw_fn: impl Fn(KaolinScope<Color>) -> KaolinScope<Color>) {
         let commands = self.kaolin.draw(draw_fn);
         let mut raylib = self.raylib.borrow_mut();
         let mut d = raylib.begin_drawing(&self.thread);
@@ -100,7 +79,7 @@ impl KaolinRenderer<KRaylibColor> for RaylibRenderer {
                     color,
                     ..
                 } => {
-                    d.draw_rectangle(x as i32, y as i32, width as i32, height as i32, color.inner);
+                    d.draw_rectangle(x as i32, y as i32, width as i32, height as i32, color);
                 }
                 RenderCommand::DrawText {
                     text,
@@ -110,13 +89,7 @@ impl KaolinRenderer<KRaylibColor> for RaylibRenderer {
                     font_size,
                     ..
                 } => {
-                    d.draw_text(
-                        text.as_str(),
-                        x as i32,
-                        y as i32,
-                        font_size as i32,
-                        color.inner,
-                    );
+                    d.draw_text(text.as_str(), x as i32, y as i32, font_size as i32, color);
                 }
             }
         }

@@ -11,7 +11,7 @@ use crate::{
 
 pub struct KaolinScope<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     flex: FlexBox<Color>,
     measure_text: MeasureTextFnRef<Color>,
@@ -19,7 +19,7 @@ where
 
 impl<Color> KaolinScope<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color> + 'static,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor + 'static,
 {
     /// Creates a new root scope, this is where the layout tree begins.
     /// ### This should not be used externally, if you are looking for a way to create a new child element with its own scope, see [KaolinScope::with].

@@ -6,7 +6,7 @@ use crate::{elements::flexbox::FlexBox, style::border};
 #[derive(Debug, Clone)]
 pub enum RenderCommand<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     /// Draws a rectangle on the screen.
     DrawRectangle {
@@ -52,7 +52,7 @@ where
 
 impl<Color> PartialEq for RenderCommand<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
@@ -119,14 +119,14 @@ where
 #[derive(Debug, Clone, PartialEq)]
 pub struct RenderCommands<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     commands: VecDeque<RenderCommand<Color>>,
 }
 
 impl<Color> RenderCommands<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     /// Creates a new set of render commands from a root layout.
     pub(crate) fn new(root: FlexBox<Color>) -> Self {
@@ -147,7 +147,7 @@ where
 
 impl<Color> Iterator for RenderCommands<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor<Color>,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     type Item = RenderCommand<Color>;
 

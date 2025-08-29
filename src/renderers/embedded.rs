@@ -5,7 +5,6 @@ use crate::{
     style::KaolinColor,
 };
 use embedded_graphics::{
-    pixelcolor::BinaryColor,
     prelude::*,
     primitives::{PrimitiveStyleBuilder, Rectangle},
 };
@@ -14,38 +13,20 @@ use u8g2_fonts::{
     types::{FontColor, RenderedDimensions, VerticalPosition},
 };
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
-pub struct KBinaryColor {
-    color: BinaryColor,
-}
+impl<C: PixelColor + Default> KaolinColor for C {}
 
-impl From<BinaryColor> for KBinaryColor {
-    fn from(color: BinaryColor) -> Self {
-        Self { color }
-    }
-}
-impl From<KBinaryColor> for BinaryColor {
-    fn from(k_color: KBinaryColor) -> Self {
-        k_color.color
-    }
-}
-
-impl KaolinColor<KBinaryColor> for KBinaryColor {
-    fn default_foreground_color() -> KBinaryColor {
-        KBinaryColor::from(BinaryColor::On)
-    }
-
-    fn default_background_color() -> KBinaryColor {
-        KBinaryColor::from(BinaryColor::Off)
-    }
-}
-
-pub struct EmbeddedRenderer {
+pub struct EmbeddedRenderer<Color>
+where
+    Color: PixelColor + Default + KaolinColor + 'static,
+{
     fonts: &'static [FontRenderer],
-    kaolin: Kaolin<KBinaryColor>,
+    kaolin: Kaolin<Color>,
 }
 
-impl EmbeddedRenderer {
+impl<Color> EmbeddedRenderer<Color>
+where
+    Color: PixelColor + Default + KaolinColor + 'static,
+{
     pub fn new(fonts: &'static [FontRenderer], bounding_box: Rectangle) -> Self {
         let kaolin = Kaolin::new(
             (
@@ -53,9 +34,12 @@ impl EmbeddedRenderer {
                 bounding_box.size.height as i32,
             ),
             move |text, config| {
-                let font = fonts
-                    .get(config.font_id as usize)
-                    .unwrap_or(fonts.first().unwrap());
+                let font = fonts.get(config.font_id as usize).unwrap_or(
+                    fonts
+                        .first()
+                        .ok_or("At least one font must be provided")
+                        .unwrap(),
+                );
                 let dimensions = font
                     .get_rendered_dimensions(text, (0, 0).into(), VerticalPosition::Top)
                     .unwrap_or_else(|_| RenderedDimensions::empty());
@@ -68,16 +52,13 @@ impl EmbeddedRenderer {
         );
         Self { fonts, kaolin }
     }
-}
 
-impl EmbeddedRenderer {
-    pub fn onto<'frame, D, C>(
+    pub fn onto<'frame, D>(
         &'frame self,
         target: &'frame mut D,
-    ) -> EmbeddedRendererFrame<'frame, D, C>
+    ) -> EmbeddedRendererFrame<'frame, D, Color>
     where
-        D: DrawTarget<Color = C>,
-        C: Into<KBinaryColor>,
+        D: DrawTarget<Color = Color>,
     {
         EmbeddedRendererFrame {
             renderer: self,
@@ -89,16 +70,18 @@ impl EmbeddedRenderer {
 pub struct EmbeddedRendererFrame<'frame, D, C>
 where
     D: DrawTarget<Color = C>,
+    C: PixelColor + Default + KaolinColor + 'static,
 {
-    renderer: &'frame EmbeddedRenderer,
+    renderer: &'frame EmbeddedRenderer<C>,
     target: Option<&'frame mut D>,
 }
 
-impl<'frame, D> KaolinRenderer<KBinaryColor> for EmbeddedRendererFrame<'frame, D, BinaryColor>
+impl<'frame, D, C> KaolinRenderer<C> for EmbeddedRendererFrame<'frame, D, C>
 where
-    D: DrawTarget<Color = BinaryColor>,
+    D: DrawTarget<Color = C>,
+    C: PixelColor + Default + KaolinColor + 'static,
 {
-    fn draw(&mut self, draw_fn: impl Fn(KaolinScope<KBinaryColor>) -> KaolinScope<KBinaryColor>) {
+    fn draw(&mut self, draw_fn: impl Fn(KaolinScope<C>) -> KaolinScope<C>) {
         let target = self.target.take().unwrap();
         let commands = self.renderer.kaolin.draw(draw_fn);
         // println!("Drawing {:?} commands", commands);
@@ -110,9 +93,9 @@ where
                     width,
                     height,
                     color,
+                    border,
                     ..
                 } => {
-                    let color: BinaryColor = color.into();
                     let _ = Rectangle::new(
                         Point::new(x as i32, y as i32),
                         Size::new(width as u32, height as u32),
@@ -120,7 +103,8 @@ where
                     .into_styled(
                         PrimitiveStyleBuilder::new()
                             .fill_color(color)
-                            .stroke_color(color.invert())
+                            .stroke_color(border.color)
+                            .stroke_width(border.width as u32)
                             .stroke_alignment(
                                 embedded_graphics::primitives::StrokeAlignment::Inside,
                             )
@@ -146,7 +130,7 @@ where
                         text.as_str(),
                         Point::new(x as i32, y as i32),
                         VerticalPosition::Top,
-                        FontColor::Transparent(color.into()),
+                        FontColor::Transparent(color),
                         target,
                     );
                 }
