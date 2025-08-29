@@ -2,6 +2,14 @@
 
 A flexible, immediate-mode UI layout library for Rust, inspired by [Clay](https://github.com/nicbarker/clay). Kaolin provides a powerful and intuitive API for creating responsive layouts that work across different rendering backends.
 
+> [!CAUTION]
+>
+> ## WORK IN PROGRESS
+>
+> This library is under active development, and still in its infancy
+>
+> There **WILL** be breaking changes, use at your own risk
+
 ## Features
 
 - **Immediate-mode UI**: Build layouts using a declarative, function-based API
