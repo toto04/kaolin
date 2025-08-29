@@ -1,6 +1,5 @@
-use core::{cmp::min_by, ops::Add};
-
 use alloc::{boxed::Box, string::ToString, vec::Vec};
+use core::{cmp::min_by, ops::Add};
 
 use crate::{
     commands::{RenderCommand, RenderCommands},

@@ -108,6 +108,7 @@ where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     /// Adds a child node to the container.
+    #[allow(private_interfaces)]
     fn add_child(&mut self, child: KaolinNode<Color>);
     /// Propagates width growth to the container's children.
     fn propagate_width_growth(&mut self, parent_width: f64);

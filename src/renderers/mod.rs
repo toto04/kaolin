@@ -1,3 +1,6 @@
+//! ## Renderers
+//! the things that get the commands and draw stuff on the screen.
+
 use crate::kaolin::scope::KaolinScope;
 
 pub trait KaolinRenderer<Color>

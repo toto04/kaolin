@@ -1,11 +1,13 @@
 [package]
 name = "kaolin"
-version = "0.1.10"
+version = "0.1.11"
 edition = "2024"
 description = "A Rust library for flexible layouts, inspired by Clay"
 license-file = "LICENSE"
 repository = "https://github.com/toto04/kaolin"
 authors = ["Tommaso Morganti <tommaso.morganti@polinetwork.org>"]
+keywords = ["layout", "flexbox", "rust", "clay", "ui"]
+categories = ["gui", "no-std"]
 
 [dependencies]
 derive-default-constructor = "0.1.0"

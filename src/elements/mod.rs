@@ -1,12 +1,10 @@
-pub mod flexbox;
-pub mod text;
-pub mod traits;
+//! Internal representation of the layout elements.
 
-use crate::{
-    commands::RenderCommand,
-    elements::traits::KaolinElement,
-    style::sizing::{PreferredSize, SizingDimensions},
-};
+pub(crate) mod flexbox;
+pub(crate) mod text;
+pub mod traits;
+pub use traits::*;
+
 use alloc::{
     boxed::Box,
     string::{String, ToString},
@@ -14,6 +12,12 @@ use alloc::{
 };
 use uuid::Uuid;
 
+use crate::{
+    commands::RenderCommand,
+    style::sizing::{PreferredSize, SizingDimensions},
+};
+
+/// A node in the layout tree
 pub(crate) struct KaolinNode<Color>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
@@ -133,6 +137,7 @@ where
     }
 }
 
+/// A collection of sibling nodes in the layout tree, with methods to manipulate them as a group.
 pub(crate) struct KaolinNodes<Color>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,

@@ -17,7 +17,7 @@ use crate::{
 };
 
 /// Represents a text element in the UI.
-pub struct TextElement<Color>
+pub(crate) struct TextElement<Color>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {

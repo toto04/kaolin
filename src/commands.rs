@@ -1,3 +1,7 @@
+//! ## Commands
+//! Definitions of the rendering commands that will be used to draw the UI elements.
+//! Those should be used as a reference for implementing custom renderers.
+
 use alloc::{collections::VecDeque, string::String};
 
 use crate::{elements::flexbox::FlexBox, style::border};

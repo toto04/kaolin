@@ -1,3 +1,8 @@
+//! ## Styling
+//! Contains types and traits for styling UI elements.
+//!
+//! This module provides definitions for both Flex Boxes with [`FlexStyle`] and text configuration with [`TextStyle`].
+
 pub mod border;
 pub mod layout;
 pub mod padding;
@@ -10,6 +15,8 @@ use crate::style::layout::Layout;
 use crate::style::padding::Padding;
 use crate::style::sizing::BoxSizing;
 
+/// Trait for defining colors in the Kaolin UI framework.
+/// This color should be tied to the renderer.
 pub trait KaolinColor: Default + Copy + PartialEq {
     /// default color for things like text and borders.
     fn default_foreground_color() -> Self {
