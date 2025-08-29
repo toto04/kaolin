@@ -38,7 +38,7 @@ kaolin = { version = "0.1", features = ["embedded"] }
 
 Here's a simple "Hello, World!" example using the Raylib renderer:
 
-```rust
+```rust,ignore
 use kaolin::{
     Kaolin, grow, sizing,
     renderers::KaolinRenderer,
@@ -81,7 +81,7 @@ fn main() {
 
 Kaolin uses a tree-based layout system where each element can contain child elements. The layout is built using a functional, immediate-mode API:
 
-```rust
+```rust,ignore
 kaolin.draw(|k| {
     k.with(container_style, |k| {
         k.text("Some text", text_style)
@@ -98,7 +98,7 @@ Kaolin supports several sizing modes for flexible layouts:
 
 #### Fixed Sizing
 
-```rust
+```rust,ignore
 // Fixed dimensions
 sizing!(fixed!(200.0), fixed!(100.0))  // 200px width, 100px height
 sizing!(fixed!(150.0))                 // 150px for both dimensions
@@ -106,7 +106,7 @@ sizing!(fixed!(150.0))                 // 150px for both dimensions
 
 #### Fit-to-Content Sizing
 
-```rust
+```rust,ignore
 // Fits to content size
 sizing!(fit!())                        // No constraints
 sizing!(fit!(max_width))               // Maximum width constraint
@@ -115,7 +115,7 @@ sizing!(fit!(min_width, max_width))    // Min and max constraints
 
 #### Growth-based Sizing
 
-```rust
+```rust,ignore
 // Grows to fill available space
 sizing!(grow!())                       // Default growth factor (1.0)
 sizing!(grow!(2.0))                    // Custom growth factor
@@ -126,7 +126,7 @@ sizing!(grow!(1.0, min, max))          // Growth with constraints
 
 Control how child elements are arranged:
 
-```rust
+```rust,ignore
 Layout::new()
     .direction(Direction::LeftToRight)     // or TopToBottom, RightToLeft, BottomToTop
     .alignment(Alignment::Center)          // Cross-axis: Start, End, Center, Stretch
@@ -138,7 +138,7 @@ Layout::new()
 
 Style containers and text with comprehensive options:
 
-```rust
+```rust,ignore
 // Container styling
 FlexStyle::new()
     .background_color(Color::BLUE)
@@ -159,7 +159,7 @@ TextStyle::new()
 
 Create layouts that adapt to different screen sizes:
 
-```rust
+```rust,ignore
 k.with(
     FlexStyle::new()
         .layout(Layout::new().direction(Direction::TopToBottom))
@@ -194,7 +194,7 @@ k.with(
 
 ### Multi-Column Layout
 
-```rust
+```rust,ignore
 k.with(
     FlexStyle::new()
         .layout(Layout::new().gap(20.0))
@@ -224,7 +224,7 @@ k.with(
 
 Perfect for desktop applications and games:
 
-```rust
+```rust,ignore
 use kaolin::renderers::raylib::RaylibRenderer;
 
 let mut renderer = RaylibRenderer::new(800, 600);
@@ -239,7 +239,7 @@ while !renderer.should_close() {
 
 Ideal for embedded systems and small displays:
 
-```rust
+```rust,ignore
 use kaolin::renderers::embedded::EmbeddedRenderer;
 use embedded_graphics_simulator::{SimulatorDisplay, Window};
 
@@ -255,7 +255,7 @@ renderer.onto(&mut display).draw(|k| {
 
 Implement the `KaolinRenderer` trait to create your own backend:
 
-```rust
+```rust,ignore
 impl KaolinRenderer for MyRenderer {
     type Color = MyColor;
     
@@ -271,7 +271,7 @@ impl KaolinRenderer for MyRenderer {
 
 Kaolin automatically handles text wrapping within constrained widths:
 
-```rust
+```rust,ignore
 k.with(
     FlexStyle::new().sizing(sizing!(fixed!(200.0), fit!())),
     |k| {
@@ -285,7 +285,7 @@ k.with(
 
 Use growth factors to create proportional layouts:
 
-```rust
+```rust,ignore
 k.with(FlexStyle::new().sizing(sizing!(grow!(1.0))), |k| k)  // Takes 1/4 of space
  .with(FlexStyle::new().sizing(sizing!(grow!(3.0))), |k| k)  // Takes 3/4 of space
 ```
@@ -294,7 +294,7 @@ k.with(FlexStyle::new().sizing(sizing!(grow!(1.0))), |k| k)  // Takes 1/4 of spa
 
 Create complex layouts by nesting containers:
 
-```rust
+```rust,ignore
 k.with(outer_container, |k| {
     k.with(inner_container_1, |k| {
         k.text("Content 1", style)

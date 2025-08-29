@@ -60,9 +60,8 @@ fn render_empty_flex_container() {
 #[test]
 fn render_text_with_custom_font() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let commands = kaolin.draw(|k| {
-        k.text("Custom Font", TextStyle::new().font_id(5).font_size(24.0))
-    });
+    let commands =
+        kaolin.draw(|k| k.text("Custom Font", TextStyle::new().font_id(5).font_size(24.0)));
 
     assert_eq!(
         commands.collect::<Vec<_>>(),
@@ -175,7 +174,7 @@ fn render_fit_to_content_container() {
                 color: TestColor::Transparent,
                 x: 0.0,
                 y: 0.0,
-                width: 90.0, // Fits text width
+                width: 90.0,  // Fits text width
                 height: 20.0, // Fits text height
                 corner_radius: 0.0,
                 border: Border::default(),
