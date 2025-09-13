@@ -157,7 +157,7 @@ where
     }
 }
 
-impl<Color> KaolinElement<Color> for TextElement<Color>
+impl<'frame, Color, CustomData> KaolinElement<'frame, Color, CustomData> for TextElement<Color>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
@@ -180,7 +180,7 @@ where
         &self,
         offsets: (f64, f64),
         _size: (f64, f64),
-    ) -> Box<dyn Iterator<Item = RenderCommand<Color>> + '_> {
+    ) -> Box<dyn Iterator<Item = RenderCommand<Color, CustomData>> + '_> {
         let mut current_y = offsets.1;
         Box::new(self.lines.iter().filter_map(move |line_indices| {
             let (start, end) = *line_indices;
@@ -227,7 +227,9 @@ where
         self.inherited_color = Some(inherited_color);
     }
 
-    fn as_container(&mut self) -> Option<&mut dyn KaolinContainerElement<Color>> {
+    fn as_container(
+        &mut self,
+    ) -> Option<&mut dyn KaolinContainerElement<'frame, Color, CustomData>> {
         None
     }
 }

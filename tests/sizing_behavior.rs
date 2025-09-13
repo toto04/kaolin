@@ -11,7 +11,7 @@ use common::*;
 #[test]
 fn proportional_growth_factors() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(FlexStyle::new().sizing(sizing! { grow!(1.0) }), |k| k)
             .with(FlexStyle::new().sizing(sizing! { grow!(3.0) }), |k| k)
     });
@@ -35,7 +35,7 @@ fn proportional_growth_factors() {
 #[test]
 fn mixed_fixed_and_growable_sizing() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(FlexStyle::new().sizing(sizing! { fixed!(200.0) }), |k| k)
             .with(FlexStyle::new().sizing(sizing! { grow!(1.0) }), |k| k)
             .with(FlexStyle::new().sizing(sizing! { fixed!(100.0) }), |k| k)
@@ -52,7 +52,7 @@ fn mixed_fixed_and_growable_sizing() {
 #[test]
 fn size_constraints_with_growth() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new().sizing(sizing! { grow!(1.0, 50.0, 150.0) }), // min 50, max 150
             |k| k,
@@ -70,7 +70,7 @@ fn size_constraints_with_growth() {
 #[test]
 fn fit_sizing_with_max_constraint() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new().sizing(sizing! { fit!(200.0) }), // max 200px
             |k| {
@@ -94,7 +94,7 @@ fn fit_sizing_with_max_constraint() {
 #[test]
 fn fit_sizing_adapts_to_content() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(FlexStyle::new().sizing(sizing! { fit!() }), |k| {
             k.text("Short", TextStyle::new()) // 50px wide
         })
@@ -108,7 +108,7 @@ fn fit_sizing_adapts_to_content() {
 #[test]
 fn vertical_growth_behavior() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
@@ -137,7 +137,7 @@ fn vertical_growth_behavior() {
 #[test]
 fn nested_growth_behavior() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(FlexStyle::new().sizing(sizing! { grow!(1.0) }), |k| {
             k.with(
                 FlexStyle::new().sizing(sizing! { grow!(1.0), fit!() }),
@@ -159,7 +159,7 @@ fn nested_growth_behavior() {
 #[test]
 fn growth_with_padding() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
@@ -191,7 +191,7 @@ fn growth_with_padding() {
 #[test]
 fn basic_shrinking_scenario() {
     let kaolin = Kaolin::new((300, 200), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new().sizing(sizing!(fixed!(300.0), fixed!(200.0))),
             |k| {

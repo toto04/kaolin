@@ -38,7 +38,7 @@ pub(crate) type MeasureTextFnRef<Color> = Weak<MeasureTextFnStatic<Color>>;
 
 pub struct Kaolin<Color>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor + 'static,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     width: f64,
     height: f64,
@@ -63,22 +63,24 @@ where
         }
     }
 
-    pub fn draw(
+    pub fn draw<'frame, CustomData: 'frame>(
         &self,
-        drawing_fn: impl Fn(scope::KaolinScope<Color>) -> scope::KaolinScope<Color>,
-    ) -> RenderCommands<Color> {
-        let flex = FlexBox::new(FlexStyle::default().sizing(sizing! {
+        drawing_fn: impl FnOnce(
+            scope::KaolinScope<'frame, Color, CustomData>,
+        ) -> scope::KaolinScope<'frame, Color, CustomData>,
+    ) -> RenderCommands<Color, CustomData> {
+        let flex = FlexBox::<Color, CustomData>::new(FlexStyle::default().sizing(sizing! {
             width: fixed!(self.width),
             height: fixed!(self.height),
         }));
         let measure_text_weak: MeasureTextFnRef<Color> = Rc::downgrade(&self.measure_text);
-        let mut scope = scope::KaolinScope::new(flex, measure_text_weak);
+        let mut scope = scope::KaolinScope::<_, CustomData>::new(flex, measure_text_weak);
         scope = drawing_fn(scope);
 
         let mut flex = scope.conclude();
         flex.grow_children_width(self.width);
         flex.grow_children_height(self.height);
         flex.position_children((0.0, self.width, 0.0, self.height));
-        flex.conclude()
+        RenderCommands::new(flex)
     }
 }

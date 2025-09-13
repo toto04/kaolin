@@ -15,7 +15,7 @@ use common::*;
 #[test]
 fn basic_nested_containers() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new().sizing(sizing!(fixed!(800.0), fixed!(600.0))),
             |k| {
@@ -49,7 +49,7 @@ fn basic_nested_containers() {
 #[test]
 fn multi_level_nesting_different_directions() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
@@ -105,7 +105,7 @@ fn multi_level_nesting_different_directions() {
 #[test]
 fn nested_containers_with_growth() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(FlexStyle::new().sizing(sizing!(grow!(1.0))), |k| {
             k.with(FlexStyle::new().sizing(sizing!(grow!(1.0), fit!())), |k| {
                 k.text("Inner Growth", TextStyle::new())
@@ -133,7 +133,7 @@ fn nested_containers_with_growth() {
 #[test]
 fn nested_containers_different_alignments() {
     let kaolin = Kaolin::new((600, 400), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(600.0), fixed!(400.0)))
@@ -173,7 +173,7 @@ fn nested_containers_different_alignments() {
 #[test]
 fn nested_containers_with_padding() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
@@ -205,7 +205,7 @@ fn nested_containers_with_padding() {
 #[test]
 fn deeply_nested_containers() {
     let kaolin = Kaolin::new((400, 300), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new().sizing(sizing!(fixed!(400.0), fixed!(300.0))),
             |k| {
@@ -239,7 +239,7 @@ fn deeply_nested_containers() {
 #[test]
 fn nested_fit_and_fixed_sizing() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new().sizing(sizing!(fixed!(800.0), fixed!(600.0))),
             |k| {

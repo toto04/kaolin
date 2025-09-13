@@ -91,6 +91,7 @@ impl KaolinRenderer<Color> for RaylibRenderer {
                 } => {
                     d.draw_text(text.as_str(), x as i32, y as i32, font_size as i32, color);
                 }
+                _ => {}
             }
         }
     }

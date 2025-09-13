@@ -18,7 +18,7 @@ use crate::{
 };
 
 /// A node in the layout tree
-pub(crate) struct KaolinNode<Color>
+pub(crate) struct KaolinNode<'frame, Color, CustomData>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
@@ -27,7 +27,7 @@ where
     growable_width: bool,
     growable_height: bool,
     shrinkable: bool,
-    element: Box<dyn KaolinElement<Color>>,
+    element: Box<dyn KaolinElement<'frame, Color, CustomData> + 'frame>,
     sizing: (SizingDimensions, SizingDimensions),
     current_width: f64,
     current_height: f64,
@@ -35,11 +35,14 @@ where
     y: f64,
 }
 
-impl<Color> KaolinNode<Color>
+impl<'frame, Color, CustomData> KaolinNode<'frame, Color, CustomData>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
-    pub(crate) fn new(element: impl KaolinElement<Color> + 'static, id: Option<String>) -> Self {
+    pub(crate) fn new(
+        element: impl KaolinElement<'frame, Color, CustomData> + 'frame,
+        id: Option<String>,
+    ) -> Self {
         let id = id.unwrap_or_else(|| Uuid::new_v4().to_string());
         let (width, height) = element.get_sizing_dimensions();
         KaolinNode {
@@ -131,21 +134,21 @@ where
     }
 
     /// Renders the element and its children into a series of rendering commands.
-    pub fn render(&self) -> Box<dyn Iterator<Item = RenderCommand<Color>> + '_> {
+    pub fn render(&self) -> Box<dyn Iterator<Item = RenderCommand<Color, CustomData>> + '_> {
         self.element
             .render((self.x, self.y), (self.current_width, self.current_height))
     }
 }
 
 /// A collection of sibling nodes in the layout tree, with methods to manipulate them as a group.
-pub(crate) struct KaolinNodes<Color>
+pub(crate) struct KaolinNodes<'frame, Color, CustomData>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
-    pub(crate) nodes: Vec<KaolinNode<Color>>,
+    pub(crate) nodes: Vec<KaolinNode<'frame, Color, CustomData>>,
 }
 
-impl<Color> KaolinNodes<Color>
+impl<'frame, Color, CustomData> KaolinNodes<'frame, Color, CustomData>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
@@ -154,17 +157,17 @@ where
     }
 
     /// Add a new child
-    fn push(&mut self, node: KaolinNode<Color>) {
+    fn push(&mut self, node: KaolinNode<'frame, Color, CustomData>) {
         self.nodes.push(node);
     }
 
     /// Returns an array of mutable references of all growable children in the horizontal direction.
-    fn get_growable_children_w(&mut self) -> Vec<&mut KaolinNode<Color>> {
+    fn get_growable_children_w(&mut self) -> Vec<&mut KaolinNode<'frame, Color, CustomData>> {
         self.nodes.iter_mut().filter(|c| c.growable_width).collect()
     }
 
     /// Returns an array of mutable references of all growable children in the vertical direction.
-    fn get_growable_children_h(&mut self) -> Vec<&mut KaolinNode<Color>> {
+    fn get_growable_children_h(&mut self) -> Vec<&mut KaolinNode<'frame, Color, CustomData>> {
         self.nodes
             .iter_mut()
             .filter(|c| c.growable_height)
@@ -172,13 +175,15 @@ where
     }
 
     /// Returns an array of mutable references of all shrinkable children.
-    fn get_shrinkable_children(&mut self) -> Vec<&mut KaolinNode<Color>> {
+    fn get_shrinkable_children(&mut self) -> Vec<&mut KaolinNode<'frame, Color, CustomData>> {
         self.nodes.iter_mut().filter(|c| c.shrinkable).collect()
     }
 
     /// Looks for the smallest and second smallest widths among the children.
     /// Important to make sure all children grow together.
-    fn get_smallest_widths(children: &Vec<&mut KaolinNode<Color>>) -> (f64, f64) {
+    fn get_smallest_widths(
+        children: &Vec<&mut KaolinNode<'frame, Color, CustomData>>,
+    ) -> (f64, f64) {
         let mut smallest = f64::INFINITY;
         let mut second_smallest = f64::INFINITY;
         for node in children {
@@ -194,7 +199,7 @@ where
 
     /// Looks for the smallest and second smallest heights among the children.
     /// Important to make sure all children grow together.
-    fn get_smallest_heights(children: &Vec<&mut KaolinNode<Color>>) -> (f64, f64) {
+    fn get_smallest_heights(children: &Vec<&mut KaolinNode<Color, CustomData>>) -> (f64, f64) {
         let mut smallest = f64::INFINITY;
         let mut second_smallest = f64::INFINITY;
         for node in children {
@@ -210,7 +215,7 @@ where
 
     /// Looks for the biggest and second biggest widths among the children.
     /// Important to make sure all children grow together.
-    fn get_biggest_widths(children: &Vec<&mut KaolinNode<Color>>) -> (f64, f64) {
+    fn get_biggest_widths(children: &Vec<&mut KaolinNode<Color, CustomData>>) -> (f64, f64) {
         let mut biggest = 0.0;
         let mut second_biggest = 0.0;
         for node in children {
@@ -249,7 +254,7 @@ where
     }
 
     /// Returns an iterator over the child nodes.
-    fn nodes(&mut self) -> impl Iterator<Item = &mut KaolinNode<Color>> {
+    fn nodes(&mut self) -> impl Iterator<Item = &mut KaolinNode<'frame, Color, CustomData>> {
         self.nodes.iter_mut()
     }
 
@@ -272,11 +277,11 @@ where
         });
     }
 
-    pub fn render_nodes(&self) -> Box<dyn Iterator<Item = RenderCommand<Color>> + '_> {
+    pub fn render_nodes(&self) -> Box<dyn Iterator<Item = RenderCommand<Color, CustomData>> + '_> {
         Box::new(
             self.nodes
                 .iter()
-                .flat_map(|node: &KaolinNode<Color>| node.render()),
+                .flat_map(|node: &KaolinNode<Color, CustomData>| node.render()),
         )
     }
 

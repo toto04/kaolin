@@ -9,7 +9,12 @@ use crate::style::sizing::SizingDimensions;
 ///
 /// You can create your own elements by implementing this trait, and providing the necessary
 /// methods to handle layout, rendering, and interaction.
-pub trait KaolinElement<Color>
+///
+/// You can set a generic `CustomData` type if your element needs to carry additional data for rendering,
+/// although that data will need to be consistent across all elements for a specific renderer.
+///
+/// For elements that can contain other elements, also implement the [`KaolinContainerElement`] trait.
+pub trait KaolinElement<'frame, Color, CustomData = !>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
@@ -25,7 +30,7 @@ where
         &self,
         offsets: (f64, f64),
         size: (f64, f64),
-    ) -> Box<dyn Iterator<Item = RenderCommand<Color>> + '_>;
+    ) -> Box<dyn Iterator<Item = RenderCommand<Color, CustomData>> + '_>;
 
     /// whether or not the element starts as growable in width, defaults to
     /// [`SizingDimensions::is_growable`]
@@ -86,7 +91,9 @@ where
     /// based on whether the element should behave like a container or not.
     ///
     /// To be able to return `Some(self)`, the element must implement the [`KaolinContainerElement`] trait.
-    fn as_container(&mut self) -> Option<&mut dyn KaolinContainerElement<Color>>;
+    fn as_container(
+        &mut self,
+    ) -> Option<&mut dyn KaolinContainerElement<'frame, Color, CustomData>>;
 }
 
 /// This trait represents an element which can contain other elements
@@ -103,13 +110,14 @@ where
 ///     ...
 /// }
 /// ```
-pub trait KaolinContainerElement<Color>: KaolinElement<Color>
+pub trait KaolinContainerElement<'frame, Color, CustomData>:
+    KaolinElement<'frame, Color, CustomData>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     /// Adds a child node to the container.
     #[allow(private_interfaces)]
-    fn add_child(&mut self, child: KaolinNode<Color>);
+    fn add_child(&mut self, child: KaolinNode<'frame, Color, CustomData>);
     /// Propagates width growth to the container's children.
     fn propagate_width_growth(&mut self, parent_width: f64);
     /// Propagates height growth to the container's children.

@@ -1,4 +1,4 @@
 {
-  "rust-analyzer.cargo.features": ["raylib", "embedded"],
-  "rust-analyzer.files.exclude": ["examples"]
+  "rust-analyzer.cargo.features": ["embedded"]
+  // "rust-analyzer.files.exclude": ["examples"]
 }

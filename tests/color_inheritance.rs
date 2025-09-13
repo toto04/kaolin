@@ -11,7 +11,7 @@ use common::*;
 #[test]
 fn basic_color_inheritance() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(FlexStyle::new().color(TestColor::Red), |k| {
             k.text("Hello, Kaolin!", TextStyle::new())
         })
@@ -25,7 +25,7 @@ fn basic_color_inheritance() {
 #[test]
 fn multi_level_color_inheritance() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(FlexStyle::new().color(TestColor::Red), |k| {
             k.with(FlexStyle::new(), |k| {
                 // No color set, should inherit
@@ -49,7 +49,7 @@ fn multi_level_color_inheritance() {
 #[test]
 fn color_inheritance_override() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(FlexStyle::new().color(TestColor::Red), |k| {
             k.text("Red Text", TextStyle::new())
                 .with(FlexStyle::new().color(TestColor::Black), |k| {
@@ -69,7 +69,7 @@ fn color_inheritance_override() {
 #[test]
 fn explicit_text_color_override() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(FlexStyle::new().color(TestColor::Red), |k| {
             k.text("Inherited Red", TextStyle::new())
                 .text("Explicit Black", TextStyle::new().color(TestColor::Black))
@@ -86,7 +86,7 @@ fn explicit_text_color_override() {
 #[test]
 fn color_inheritance_multiple_siblings() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(FlexStyle::new().color(TestColor::Red), |k| {
             k.text("First", TextStyle::new())
                 .text("Second", TextStyle::new())
@@ -105,7 +105,7 @@ fn color_inheritance_multiple_siblings() {
 #[test]
 fn default_color_behavior() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(FlexStyle::new(), |k| {
             // No color specified
             k.text("Default Color", TextStyle::new())
@@ -121,7 +121,7 @@ fn default_color_behavior() {
 #[test]
 fn complex_color_inheritance_scenario() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(FlexStyle::new().color(TestColor::Red), |k| {
             k.text("Red Header", TextStyle::new())
                 .with(FlexStyle::new(), |k| {

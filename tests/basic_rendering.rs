@@ -13,7 +13,7 @@ use common::*;
 #[test]
 fn render_text_element() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let commands = kaolin.draw(|k| k.text("Hello, Kaolin!", TextStyle::new()));
+    let commands = kaolin.draw::<()>(|k| k.text("Hello, Kaolin!", TextStyle::new()));
 
     assert_eq!(
         commands.collect::<Vec<_>>(),
@@ -33,7 +33,7 @@ fn render_text_element() {
 #[test]
 fn render_empty_flex_container() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let commands = kaolin.draw(|k| {
+    let commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new().sizing(sizing!(fixed!(800.0), fixed!(600.0))),
             |k| k,
@@ -61,7 +61,7 @@ fn render_empty_flex_container() {
 fn render_text_with_custom_font() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let commands =
-        kaolin.draw(|k| k.text("Custom Font", TextStyle::new().font_id(5).font_size(24.0)));
+        kaolin.draw::<()>(|k| k.text("Custom Font", TextStyle::new().font_id(5).font_size(24.0)));
 
     assert_eq!(
         commands.collect::<Vec<_>>(),
@@ -81,7 +81,7 @@ fn render_text_with_custom_font() {
 #[test]
 fn render_container_with_text() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let commands = kaolin.draw(|k| {
+    let commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new().sizing(sizing!(fixed!(200.0), fixed!(100.0))),
             |k| k.text("Inside", TextStyle::new()),
@@ -118,7 +118,7 @@ fn render_container_with_text() {
 #[test]
 fn render_multiple_text_elements() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let commands = kaolin.draw(|k| {
+    let commands = kaolin.draw::<()>(|k| {
         k.text("First", TextStyle::new())
             .text("Second", TextStyle::new())
             .text("Third", TextStyle::new())
@@ -160,7 +160,7 @@ fn render_multiple_text_elements() {
 #[test]
 fn render_fit_to_content_container() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let commands = kaolin.draw(|k| {
+    let commands = kaolin.draw::<()>(|k| {
         k.with(FlexStyle::new(), |k| {
             k.text("Auto Size", TextStyle::new()) // 90px wide, 20px tall
         })

@@ -1,3 +1,5 @@
+pub mod image;
+
 use crate::{
     commands::RenderCommand,
     kaolin::{Kaolin, scope::KaolinScope},
@@ -5,6 +7,7 @@ use crate::{
     style::KaolinColor,
 };
 use embedded_graphics::{
+    image::Image,
     prelude::*,
     primitives::{PrimitiveStyleBuilder, Rectangle},
 };
@@ -15,6 +18,9 @@ use u8g2_fonts::{
 
 impl<C: PixelColor + Default> KaolinColor for C {}
 
+/// A renderer that uses the embedded-graphics library to draw UI elements.
+/// This renderer supports any color type that implements the `PixelColor` trait from embedded-graphics.
+/// It also requires at least one font to be provided for text rendering, for now using [`u8g2_fonts`].
 pub struct EmbeddedRenderer<Color>
 where
     Color: PixelColor + Default + KaolinColor + 'static,
@@ -47,12 +53,15 @@ where
                     Some(box_) => (box_.size.width as f64, box_.size.height as f64),
                     None => (0.0, 0.0),
                 }
-                // (2.0, 2.0) // Placeholder for actual dimensions
             },
         );
         Self { fonts, kaolin }
     }
 
+    /// Prepare to render onto a specific DrawTarget.
+    /// This returns an intermediate structure that
+    /// holds a mutable reference to the target, and implements [`KaolinRenderer`],
+    /// onto which `draw` can be called.
     pub fn onto<'frame, D>(
         &'frame self,
         target: &'frame mut D,
@@ -76,12 +85,19 @@ where
     target: Option<&'frame mut D>,
 }
 
-impl<'frame, D, C> KaolinRenderer<C> for EmbeddedRendererFrame<'frame, D, C>
+impl<'frame, D, C, I> KaolinRenderer<'frame, C, Image<'frame, I>>
+    for EmbeddedRendererFrame<'frame, D, C>
 where
     D: DrawTarget<Color = C>,
     C: PixelColor + Default + KaolinColor + 'static,
+    I: ImageDrawable<Color = C> + Clone + Send + Sync + PartialEq,
 {
-    fn draw(&mut self, draw_fn: impl Fn(KaolinScope<C>) -> KaolinScope<C>) {
+    fn draw(
+        &mut self,
+        draw_fn: impl FnOnce(
+            KaolinScope<'frame, C, Image<'frame, I>>,
+        ) -> KaolinScope<'frame, C, Image<'frame, I>>,
+    ) {
         let target = self.target.take().unwrap();
         let commands = self.renderer.kaolin.draw(draw_fn);
         // println!("Drawing {:?} commands", commands);
@@ -133,6 +149,9 @@ where
                         FontColor::Transparent(color),
                         target,
                     );
+                }
+                RenderCommand::Custom { x, y, data, .. } => {
+                    let _ = data.translate(Point::new(x as i32, y as i32)).draw(target);
                 }
             }
         }

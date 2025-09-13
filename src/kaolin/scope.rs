@@ -9,24 +9,29 @@ use crate::{
     style::{FlexStyle, TextStyle},
 };
 
-pub struct KaolinScope<Color>
+pub struct KaolinScope<'frame, Color, CustomData>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
-    flex: FlexBox<Color>,
+    flex: FlexBox<'frame, Color, CustomData>,
     measure_text: MeasureTextFnRef<Color>,
 }
 
-impl<Color> KaolinScope<Color>
+#[allow(private_bounds)]
+impl<'frame, Color, CustomData: 'frame> KaolinScope<'frame, Color, CustomData>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor + 'static,
+    TextElement<Color>: KaolinElement<'frame, Color, CustomData>,
 {
     /// Creates a new root scope, this is where the layout tree begins.
     /// ### This should not be used externally, if you are looking for a way to create a new child element with its own scope, see [KaolinScope::with].
     ///
     /// A new scope is also created for each child flex container, iteratively
     /// allowing for nested layouts.
-    pub(super) fn new(flex: FlexBox<Color>, measure_text: MeasureTextFnRef<Color>) -> Self {
+    pub(super) fn new(
+        flex: FlexBox<'frame, Color, CustomData>,
+        measure_text: MeasureTextFnRef<Color>,
+    ) -> Self {
         KaolinScope { flex, measure_text }
     }
 
@@ -34,7 +39,7 @@ where
     /// This function is called internally when the component tree definition is
     /// completed, allowing the root element to access the finalized layout, consuming
     /// the scope in the process.
-    pub(super) fn conclude(self) -> FlexBox<Color> {
+    pub(super) fn conclude(self) -> FlexBox<'frame, Color, CustomData> {
         self.flex
     }
 
@@ -57,7 +62,9 @@ where
     pub fn with(
         mut self,
         style: FlexStyle<Color>,
-        contents: impl Fn(KaolinScope<Color>) -> KaolinScope<Color>,
+        contents: impl FnOnce(
+            KaolinScope<'frame, Color, CustomData>,
+        ) -> KaolinScope<'frame, Color, CustomData>,
     ) -> Self {
         let mut child_flex = FlexBox::new(style);
         let color = style
@@ -86,12 +93,28 @@ where
     /// ```
     pub fn text(mut self, content: &str, style: TextStyle<Color>) -> Self {
         let mut text_element = TextElement::new(content, style, self.measure_text.clone());
-        text_element.inherit_color(
-            self.flex
-                .inherited_color
-                .unwrap_or(Color::default_foreground_color()),
-        );
+        let color = self
+            .flex
+            .inherited_color
+            .unwrap_or(Color::default_foreground_color());
+        text_element.inherit_color(color);
+
         self.flex.add_child(KaolinNode::new(text_element, None));
+        self
+    }
+
+    /// ### Add a custom element to the current scope
+    ////
+    /// This function allows you to add any element implementing the `KaolinElement` trait
+    /// to the current scope.
+    ///
+    /// See [`KaolinElement`] for more details on how to create your own elements,
+    /// and [`kaolin::renderers::embedded::image::Image`] for an example implementation.
+    pub fn with_element<Element: KaolinElement<'frame, Color, CustomData> + Copy + 'frame>(
+        mut self,
+        element: &'frame Element,
+    ) -> Self {
+        self.flex.add_child(KaolinNode::new(*element, None));
         self
     }
 }

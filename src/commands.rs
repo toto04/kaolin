@@ -8,7 +8,7 @@ use crate::{elements::flexbox::FlexBox, style::border};
 
 /// A single rendering command.
 #[derive(Debug, Clone)]
-pub enum RenderCommand<Color>
+pub enum RenderCommand<Color, CustomData = !>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
@@ -52,9 +52,25 @@ where
         /// The color of the text.
         color: Color,
     },
+
+    /// A custom render command, which carries arbitrary data for the renderer to interpret.
+    Custom {
+        /// not implemented yet
+        id: String,
+        /// The absolute x position of the custom element.
+        x: f64,
+        /// The absolute y position of the custom element.
+        y: f64,
+        /// The width of the custom element.
+        width: f64,
+        /// The height of the custom element.
+        height: f64,
+        /// The custom data associated with the element.
+        data: CustomData,
+    },
 }
 
-impl<Color> PartialEq for RenderCommand<Color>
+impl<Color, CustomData> PartialEq for RenderCommand<Color, CustomData>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
@@ -121,19 +137,19 @@ where
 ///
 /// This struct implements an iterator of the render commands, which should be processed in order.
 #[derive(Debug, Clone, PartialEq)]
-pub struct RenderCommands<Color>
+pub struct RenderCommands<Color, CustomData>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
-    commands: VecDeque<RenderCommand<Color>>,
+    commands: VecDeque<RenderCommand<Color, CustomData>>,
 }
 
-impl<Color> RenderCommands<Color>
+impl<Color, CustomData> RenderCommands<Color, CustomData>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     /// Creates a new set of render commands from a root layout.
-    pub(crate) fn new(root: FlexBox<Color>) -> Self {
+    pub(crate) fn new(root: FlexBox<Color, CustomData>) -> Self {
         let children = root.children;
         RenderCommands {
             commands: children.render_nodes().collect::<VecDeque<_>>(),
@@ -149,11 +165,11 @@ where
     }
 }
 
-impl<Color> Iterator for RenderCommands<Color>
+impl<Color, CustomData> Iterator for RenderCommands<Color, CustomData>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
-    type Item = RenderCommand<Color>;
+    type Item = RenderCommand<Color, CustomData>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.commands.pop_front()

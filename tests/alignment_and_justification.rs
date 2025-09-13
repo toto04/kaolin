@@ -15,7 +15,7 @@ use common::*;
 #[test]
 fn horizontal_center_alignment_space_between() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
@@ -41,7 +41,7 @@ fn horizontal_center_alignment_space_between() {
 #[test]
 fn vertical_start_alignment_start_justification() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
@@ -68,7 +68,7 @@ fn vertical_start_alignment_start_justification() {
 #[test]
 fn vertical_end_alignment_end_justification() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
@@ -95,7 +95,7 @@ fn vertical_end_alignment_end_justification() {
 #[test]
 fn horizontal_center_alignment_center_justification() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
@@ -122,7 +122,7 @@ fn horizontal_center_alignment_center_justification() {
 #[test]
 fn horizontal_space_around_justification() {
     let kaolin = Kaolin::new((900, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(900.0), fixed!(600.0)))
@@ -153,7 +153,7 @@ fn horizontal_space_around_justification() {
 #[ignore = "reason: implement RightToLeft!"]
 fn different_directions_complex_alignment() {
     let kaolin = Kaolin::new((400, 300), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(400.0), fixed!(300.0)))
@@ -182,7 +182,7 @@ fn different_directions_complex_alignment() {
 #[ignore = "reason: implement stretch?"]
 fn vertical_stretch_alignment() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
@@ -205,7 +205,7 @@ fn vertical_stretch_alignment() {
 #[test]
 fn alignment_with_padding() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))

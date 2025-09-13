@@ -15,7 +15,7 @@ use common::*;
 #[test]
 fn basic_text_wrapping() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new().sizing(sizing!(fixed!(100.0), fit!())),
             |k| k.text("This is a long text that should wrap", TextStyle::new()),
@@ -59,7 +59,7 @@ fn basic_text_wrapping() {
 #[test]
 fn narrow_container_text_wrapping() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new().sizing(sizing!(fixed!(25.0), fit!())), // Only 2.5 characters width
             |k| k.text("Hello World", TextStyle::new()),
@@ -75,7 +75,7 @@ fn narrow_container_text_wrapping() {
 #[test]
 fn text_wrapping_with_padding() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(120.0), fit!()))
@@ -94,7 +94,7 @@ fn text_wrapping_with_padding() {
 #[test]
 fn text_wrapping_vertical_layout() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
@@ -118,7 +118,7 @@ fn text_wrapping_vertical_layout() {
 #[test]
 fn multiple_texts_wrapping() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
@@ -148,7 +148,7 @@ fn multiple_texts_wrapping() {
 #[test]
 fn no_wrapping_needed() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new().sizing(sizing!(fixed!(500.0), fit!())),
             |k| k.text("Short text", TextStyle::new()), // 100px wide, fits easily
@@ -164,7 +164,7 @@ fn no_wrapping_needed() {
 #[test]
 fn text_wrapping_with_alignment() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(100.0), fit!()))
@@ -183,7 +183,7 @@ fn text_wrapping_with_alignment() {
 #[test]
 fn empty_text_wrapping() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    let mut commands = kaolin.draw(|k| {
+    let mut commands = kaolin.draw::<()>(|k| {
         k.with(
             FlexStyle::new().sizing(sizing!(fixed!(100.0), fit!())),
             |k| k.text("", TextStyle::new()), // Empty text

@@ -2,7 +2,7 @@ use alloc::{boxed::Box, string::ToString, vec::Vec};
 use core::{cmp::min_by, ops::Add};
 
 use crate::{
-    commands::{RenderCommand, RenderCommands},
+    commands::RenderCommand,
     elements::{
         KaolinNode, KaolinNodes,
         traits::{KaolinContainerElement, KaolinElement},
@@ -14,18 +14,18 @@ use crate::{
     },
 };
 
-pub(crate) struct FlexBox<Color>
+pub(crate) struct FlexBox<'frame, Color, CustomData>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     style: FlexStyle<Color>,
-    pub(crate) children: KaolinNodes<Color>,
+    pub(crate) children: KaolinNodes<'frame, Color, CustomData>,
     pub(crate) inherited_color: Option<Color>,
 }
 
-impl<Color> FlexBox<Color>
+impl<'frame, Color, CustomData> FlexBox<'frame, Color, CustomData>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor + 'static,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     pub fn new(style: FlexStyle<Color>) -> Self {
         FlexBox {
@@ -268,17 +268,12 @@ where
             main_axis += main_child_dimension + gap;
         }
     }
-
-    /// Consumes the root flex container and all of its children in the element
-    /// tree, producing a series of rendering commands.
-    pub(crate) fn conclude(self) -> RenderCommands<Color> {
-        RenderCommands::new(self)
-    }
 }
 
-impl<Color> KaolinElement<Color> for FlexBox<Color>
+impl<'frame, Color, CustomData> KaolinElement<'frame, Color, CustomData>
+    for FlexBox<'frame, Color, CustomData>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor + 'static,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     fn inherit_color(&mut self, inherited_color: Color) {
         self.inherited_color = Some(self.style.color.unwrap_or(inherited_color));
@@ -312,7 +307,7 @@ where
         &self,
         offsets: (f64, f64),
         size: (f64, f64),
-    ) -> Box<dyn Iterator<Item = RenderCommand<Color>> + '_> {
+    ) -> Box<dyn Iterator<Item = RenderCommand<Color, CustomData>> + '_> {
         let self_command = RenderCommand::DrawRectangle {
             id: "".to_string(),
             x: offsets.0,
@@ -329,16 +324,19 @@ where
         Box::new(core::iter::once(self_command).chain(self.children.render_nodes()))
     }
 
-    fn as_container(&mut self) -> Option<&mut dyn KaolinContainerElement<Color>> {
+    fn as_container(
+        &mut self,
+    ) -> Option<&mut dyn KaolinContainerElement<'frame, Color, CustomData>> {
         Some(self)
     }
 }
 
-impl<Color> KaolinContainerElement<Color> for FlexBox<Color>
+impl<'frame, Color, CustomData> KaolinContainerElement<'frame, Color, CustomData>
+    for FlexBox<'frame, Color, CustomData>
 where
-    Color: Default + Copy + PartialEq + crate::style::KaolinColor + 'static,
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
-    fn add_child(&mut self, child: KaolinNode<Color>) {
+    fn add_child(&mut self, child: KaolinNode<'frame, Color, CustomData>) {
         self.children.push(child);
     }
 
