@@ -201,17 +201,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "derive-default-constructor"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "780a0a281cd47a310065d0a56d3d8ad1eea81da0eed458ae13c0f8a843bef284"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "derive_setters"
 version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -362,10 +351,9 @@ dependencies = [
 
 [[package]]
 name = "kaolin"
-version = "0.1.12"
+version = "0.1.13"
 dependencies = [
  "clay-layout",
- "derive-default-constructor",
  "derive_setters",
  "embedded-graphics",
  "embedded-graphics-simulator",
@@ -742,9 +730,9 @@ checksum = "f6ccf251212114b54433ec949fd6a7841275f9ada20dddd2f29e9ceea4501493"
 
 [[package]]
 name = "uuid"
-version = "1.18.0"
+version = "1.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f33196643e165781c20a5ead5582283a7dacbb87855d867fbc2df3f81eddc1be"
+checksum = "2f87b8aa10b915a06587d0dec516c282ff295b475d94abf425d62b57710070a2"
 dependencies = [
  "getrandom",
  "js-sys",

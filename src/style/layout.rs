@@ -1,4 +1,3 @@
-use derive_default_constructor::DefaultConstructor;
 use derive_setters::Setters;
 
 #[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug)]
@@ -73,7 +72,7 @@ pub enum Justification {
 }
 
 /// Layout properties for the flex container (a.k.a, where do we put its children?)
-#[derive(Default, DefaultConstructor, Clone, Copy, Setters)]
+#[derive(Default, Clone, Copy, Setters)]
 pub struct Layout {
     /// The direction in which child elements are laid out.
     pub direction: Direction,
@@ -83,6 +82,13 @@ pub struct Layout {
     pub justification: Justification,
     /// The gap between child elements.
     pub gap: f64,
+}
+
+impl Layout {
+    /// alias for `Layout::default()`
+    pub fn new() -> Self {
+        Layout::default()
+    }
 }
 
 // #[cfg(test)]

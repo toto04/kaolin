@@ -8,7 +8,6 @@ pub mod layout;
 pub mod padding;
 pub mod sizing;
 
-use derive_default_constructor::DefaultConstructor;
 use derive_setters::Setters;
 
 use crate::style::layout::Layout;
@@ -29,7 +28,7 @@ pub trait KaolinColor: Default + Copy + PartialEq {
 }
 
 /// Style for a flex container
-#[derive(DefaultConstructor, Clone, Copy, Setters)]
+#[derive(Clone, Copy, Setters)]
 pub struct FlexStyle<Color>
 where
     Color: Default + Copy + PartialEq + KaolinColor,
@@ -73,6 +72,11 @@ impl<Color> FlexStyle<Color>
 where
     Color: Default + Copy + PartialEq + KaolinColor,
 {
+    /// alias for `FlexStyle::default()`
+    pub fn new() -> Self {
+        FlexStyle::default()
+    }
+
     #[inline]
     pub fn has_horizontal_layout(&self) -> bool {
         self.layout.direction.is_horizontal()
@@ -89,7 +93,7 @@ where
 }
 
 /// Style for a text element.
-#[derive(DefaultConstructor, Debug, Clone, Copy, PartialEq, Setters)]
+#[derive(Debug, Clone, Copy, PartialEq, Setters)]
 pub struct TextStyle<Color>
 where
     Color: Default + Copy + PartialEq + KaolinColor,
@@ -113,5 +117,15 @@ where
             font_size: 16.0,
             color: None,
         }
+    }
+}
+
+impl<Color> TextStyle<Color>
+where
+    Color: Default + Copy + PartialEq + KaolinColor,
+{
+    /// alias for `TextStyle::default()`
+    pub fn new() -> Self {
+        TextStyle::default()
     }
 }

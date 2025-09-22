@@ -1,8 +1,7 @@
-use derive_default_constructor::DefaultConstructor;
 use derive_setters::Setters;
 
 /// Border for the flex container.
-#[derive(Debug, Clone, Copy, PartialEq, Setters, DefaultConstructor)]
+#[derive(Debug, Clone, Copy, PartialEq, Setters)]
 pub struct Border<Color>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
@@ -20,5 +19,15 @@ where
             width: 0.0,
             color: Color::default_foreground_color(),
         }
+    }
+}
+
+impl<Color> Border<Color>
+where
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor,
+{
+    /// alias for `Border::default()`
+    pub fn new() -> Self {
+        Border::default()
     }
 }
