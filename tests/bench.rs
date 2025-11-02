@@ -15,14 +15,14 @@ fn bench_text_wrapping(b: &mut Bencher) {
     let kaolin = Kaolin::new((800, 600), measure_text);
     b.iter(|| {
         let commands = kaolin.draw::<()>(|k| {
-            k.with(
+            k.styled(
                 FlexStyle::new().sizing(sizing!(fixed!(100.0), fit!())),
                 |k| k.text("This is a long text that should wrap", TextStyle::new()),
             )
-            .with(FlexStyle::new().sizing(sizing!(grow!())), |k| {
+            .styled(FlexStyle::new().sizing(sizing!(grow!())), |k| {
                 k.text("This is a long text that should wrap", TextStyle::new())
             })
-            .with(FlexStyle::new().sizing(sizing!(grow!(2.0))), |k| {
+            .styled(FlexStyle::new().sizing(sizing!(grow!(2.0))), |k| {
                 k.text("This is a long text that should wrap", TextStyle::new())
             })
         });

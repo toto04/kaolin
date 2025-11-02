@@ -5,8 +5,13 @@ use crate::{
         text::TextElement,
         traits::{KaolinContainerElement, KaolinElement},
     },
+    grow,
     kaolin::MeasureTextFnRef,
-    style::{FlexStyle, TextStyle},
+    sizing,
+    style::{
+        FlexStyle, TextStyle,
+        layout::{Alignment, Justification, Layout},
+    },
 };
 
 pub struct KaolinScope<'frame, Color, CustomData>
@@ -59,7 +64,7 @@ where
     /// })
     /// .text("Hello from the parent!", TextStyle::new()) // inside the parent, after the child
     /// ```
-    pub fn with(
+    pub fn styled(
         mut self,
         style: FlexStyle<Color>,
         contents: impl FnOnce(
@@ -77,6 +82,22 @@ where
         let child_flex = modified_scope.conclude();
         self.flex.add_child(KaolinNode::new(child_flex, None));
         self
+    }
+
+    pub fn centered(
+        self,
+        contents: impl FnOnce(
+            KaolinScope<'frame, Color, CustomData>,
+        ) -> KaolinScope<'frame, Color, CustomData>,
+    ) -> Self {
+        let style = FlexStyle::new()
+            .layout(
+                Layout::new()
+                    .alignment(Alignment::Center)
+                    .justification(Justification::Center),
+            )
+            .sizing(sizing!(grow!()));
+        self.styled(style, contents)
     }
 
     /// ### Add a text element to the current scope

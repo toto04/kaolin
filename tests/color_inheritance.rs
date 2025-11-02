@@ -12,7 +12,7 @@ use common::*;
 fn basic_color_inheritance() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(FlexStyle::new().color(TestColor::Red), |k| {
+        k.styled(FlexStyle::new().color(TestColor::Red), |k| {
             k.text("Hello, Kaolin!", TextStyle::new())
         })
     });
@@ -26,10 +26,10 @@ fn basic_color_inheritance() {
 fn multi_level_color_inheritance() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(FlexStyle::new().color(TestColor::Red), |k| {
-            k.with(FlexStyle::new(), |k| {
+        k.styled(FlexStyle::new().color(TestColor::Red), |k| {
+            k.styled(FlexStyle::new(), |k| {
                 // No color set, should inherit
-                k.with(FlexStyle::new(), |k| {
+                k.styled(FlexStyle::new(), |k| {
                     // Another level of nesting
                     k.text("Deeply Nested", TextStyle::new())
                 })
@@ -50,9 +50,9 @@ fn multi_level_color_inheritance() {
 fn color_inheritance_override() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(FlexStyle::new().color(TestColor::Red), |k| {
+        k.styled(FlexStyle::new().color(TestColor::Red), |k| {
             k.text("Red Text", TextStyle::new())
-                .with(FlexStyle::new().color(TestColor::Black), |k| {
+                .styled(FlexStyle::new().color(TestColor::Black), |k| {
                     k.text("Black Text", TextStyle::new())
                 })
         })
@@ -70,7 +70,7 @@ fn color_inheritance_override() {
 fn explicit_text_color_override() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(FlexStyle::new().color(TestColor::Red), |k| {
+        k.styled(FlexStyle::new().color(TestColor::Red), |k| {
             k.text("Inherited Red", TextStyle::new())
                 .text("Explicit Black", TextStyle::new().color(TestColor::Black))
         })
@@ -87,7 +87,7 @@ fn explicit_text_color_override() {
 fn color_inheritance_multiple_siblings() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(FlexStyle::new().color(TestColor::Red), |k| {
+        k.styled(FlexStyle::new().color(TestColor::Red), |k| {
             k.text("First", TextStyle::new())
                 .text("Second", TextStyle::new())
                 .text("Third", TextStyle::new())
@@ -106,7 +106,7 @@ fn color_inheritance_multiple_siblings() {
 fn default_color_behavior() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(FlexStyle::new(), |k| {
+        k.styled(FlexStyle::new(), |k| {
             // No color specified
             k.text("Default Color", TextStyle::new())
         })
@@ -122,12 +122,12 @@ fn default_color_behavior() {
 fn complex_color_inheritance_scenario() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(FlexStyle::new().color(TestColor::Red), |k| {
+        k.styled(FlexStyle::new().color(TestColor::Red), |k| {
             k.text("Red Header", TextStyle::new())
-                .with(FlexStyle::new(), |k| {
+                .styled(FlexStyle::new(), |k| {
                     // Inherits red
                     k.text("Red Body", TextStyle::new())
-                        .with(FlexStyle::new().color(TestColor::Black), |k| {
+                        .styled(FlexStyle::new().color(TestColor::Black), |k| {
                             k.text("Black Footer", TextStyle::new())
                         })
                 })

@@ -16,10 +16,10 @@ use common::*;
 fn basic_nested_containers() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new().sizing(sizing!(fixed!(800.0), fixed!(600.0))),
             |k| {
-                k.with(
+                k.styled(
                     FlexStyle::new().sizing(sizing!(fixed!(400.0), fixed!(300.0))),
                     |k| k.text("Nested Text", TextStyle::new()),
                 )
@@ -50,27 +50,27 @@ fn basic_nested_containers() {
 fn multi_level_nesting_different_directions() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
                 .layout(Layout::new().direction(Direction::LeftToRight)),
             |k| {
-                k.with(
+                k.styled(
                     FlexStyle::new()
                         .sizing(sizing!(fixed!(400.0), fixed!(600.0)))
                         .layout(Layout::new().direction(Direction::TopToBottom)),
                     |k| {
-                        k.with(
+                        k.styled(
                             FlexStyle::new().sizing(sizing!(fixed!(400.0), fixed!(200.0))),
                             |k| k.text("Top", TextStyle::new()),
                         )
-                        .with(
+                        .styled(
                             FlexStyle::new().sizing(sizing!(fixed!(400.0), fixed!(200.0))),
                             |k| k.text("Bottom", TextStyle::new()),
                         )
                     },
                 )
-                .with(
+                .styled(
                     FlexStyle::new().sizing(sizing!(fixed!(400.0), fixed!(600.0))),
                     |k| k.text("Right Side", TextStyle::new()),
                 )
@@ -106,12 +106,12 @@ fn multi_level_nesting_different_directions() {
 fn nested_containers_with_growth() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(FlexStyle::new().sizing(sizing!(grow!(1.0))), |k| {
-            k.with(FlexStyle::new().sizing(sizing!(grow!(1.0), fit!())), |k| {
+        k.styled(FlexStyle::new().sizing(sizing!(grow!(1.0))), |k| {
+            k.styled(FlexStyle::new().sizing(sizing!(grow!(1.0), fit!())), |k| {
                 k.text("Inner Growth", TextStyle::new())
             })
         })
-        .with(FlexStyle::new().sizing(sizing!(grow!(1.0))), |k| {
+        .styled(FlexStyle::new().sizing(sizing!(grow!(1.0))), |k| {
             k.text("Sibling", TextStyle::new())
         })
     });
@@ -134,7 +134,7 @@ fn nested_containers_with_growth() {
 fn nested_containers_different_alignments() {
     let kaolin = Kaolin::new((600, 400), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(600.0), fixed!(400.0)))
                 .layout(
@@ -143,7 +143,7 @@ fn nested_containers_different_alignments() {
                         .justification(Justification::Center),
                 ),
             |k| {
-                k.with(
+                k.styled(
                     FlexStyle::new()
                         .sizing(sizing!(fixed!(200.0), fixed!(100.0)))
                         .layout(
@@ -174,12 +174,12 @@ fn nested_containers_different_alignments() {
 fn nested_containers_with_padding() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
                 .padding(Padding::all(50.0)),
             |k| {
-                k.with(
+                k.styled(
                     FlexStyle::new()
                         .sizing(sizing!(fixed!(300.0), fixed!(200.0)))
                         .padding(Padding::all(25.0)),
@@ -206,16 +206,16 @@ fn nested_containers_with_padding() {
 fn deeply_nested_containers() {
     let kaolin = Kaolin::new((400, 300), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new().sizing(sizing!(fixed!(400.0), fixed!(300.0))),
             |k| {
-                k.with(
+                k.styled(
                     FlexStyle::new().sizing(sizing!(fixed!(300.0), fixed!(200.0))),
                     |k| {
-                        k.with(
+                        k.styled(
                             FlexStyle::new().sizing(sizing!(fixed!(200.0), fixed!(100.0))),
                             |k| {
-                                k.with(
+                                k.styled(
                                     FlexStyle::new().sizing(sizing!(fixed!(100.0), fixed!(50.0))),
                                     |k| k.text("Deep", TextStyle::new()),
                                 )
@@ -240,10 +240,10 @@ fn deeply_nested_containers() {
 fn nested_fit_and_fixed_sizing() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new().sizing(sizing!(fixed!(800.0), fixed!(600.0))),
             |k| {
-                k.with(
+                k.styled(
                     FlexStyle::new(), // Fit sizing
                     |k| {
                         k.text("Auto Size Content", TextStyle::new()) // 170px wide, 20px tall

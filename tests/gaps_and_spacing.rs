@@ -16,7 +16,7 @@ use common::*;
 fn basic_horizontal_gaps() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
                 .layout(Layout::new().gap(20.0)),
@@ -38,7 +38,7 @@ fn basic_horizontal_gaps() {
 fn vertical_gaps() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
                 .layout(Layout::new().direction(Direction::TopToBottom).gap(15.0)),
@@ -62,7 +62,7 @@ fn vertical_gaps() {
 fn gaps_with_space_between_justification() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
                 .layout(
@@ -89,7 +89,7 @@ fn gaps_with_space_between_justification() {
 fn gaps_with_space_around_justification() {
     let kaolin = Kaolin::new((600, 400), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(600.0), fixed!(400.0)))
                 .layout(
@@ -117,7 +117,7 @@ fn gaps_with_space_around_justification() {
 fn large_gaps() {
     let kaolin = Kaolin::new((500, 300), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(500.0), fixed!(300.0)))
                 .layout(Layout::new().gap(200.0)), // Very large gap
@@ -139,7 +139,7 @@ fn large_gaps() {
 fn gaps_with_padding() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
                 .padding(Padding::all(30.0))
@@ -163,14 +163,14 @@ fn gaps_with_padding() {
 fn gaps_with_mixed_sizing() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
                 .layout(Layout::new().gap(25.0)),
             |k| {
-                k.with(FlexStyle::new().sizing(sizing!(fixed!(100.0))), |k| k)
-                    .with(FlexStyle::new().sizing(sizing!(grow!(1.0))), |k| k)
-                    .with(FlexStyle::new().sizing(sizing!(fixed!(150.0))), |k| k)
+                k.styled(FlexStyle::new().sizing(sizing!(fixed!(100.0))), |k| k)
+                    .styled(FlexStyle::new().sizing(sizing!(grow!(1.0))), |k| k)
+                    .styled(FlexStyle::new().sizing(sizing!(fixed!(150.0))), |k| k)
             },
         )
     });
@@ -196,7 +196,7 @@ fn gaps_with_mixed_sizing() {
 fn zero_gaps() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
                 .layout(Layout::new().gap(0.0)),

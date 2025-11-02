@@ -16,7 +16,7 @@ use common::*;
 fn horizontal_center_alignment_space_between() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
                 .layout(
@@ -42,7 +42,7 @@ fn horizontal_center_alignment_space_between() {
 fn vertical_start_alignment_start_justification() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
                 .layout(
@@ -69,7 +69,7 @@ fn vertical_start_alignment_start_justification() {
 fn vertical_end_alignment_end_justification() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
                 .layout(
@@ -96,7 +96,7 @@ fn vertical_end_alignment_end_justification() {
 fn horizontal_center_alignment_center_justification() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
                 .layout(
@@ -123,7 +123,7 @@ fn horizontal_center_alignment_center_justification() {
 fn horizontal_space_around_justification() {
     let kaolin = Kaolin::new((900, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(900.0), fixed!(600.0)))
                 .layout(
@@ -154,7 +154,7 @@ fn horizontal_space_around_justification() {
 fn different_directions_complex_alignment() {
     let kaolin = Kaolin::new((400, 300), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(400.0), fixed!(300.0)))
                 .layout(
@@ -183,7 +183,7 @@ fn different_directions_complex_alignment() {
 fn vertical_stretch_alignment() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
                 .layout(
@@ -191,7 +191,7 @@ fn vertical_stretch_alignment() {
                         .direction(Direction::TopToBottom)
                         .alignment(Alignment::Stretch),
                 ),
-            |k| k.with(FlexStyle::new(), |k| k.text("Stretched", TextStyle::new())),
+            |k| k.styled(FlexStyle::new(), |k| k.text("Stretched", TextStyle::new())),
         )
     });
 
@@ -206,7 +206,7 @@ fn vertical_stretch_alignment() {
 fn alignment_with_padding() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
                 .padding(Padding::all(50.0))

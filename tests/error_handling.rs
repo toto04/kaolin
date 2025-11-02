@@ -13,7 +13,7 @@ use common::*;
 fn negative_fixed_width() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new().sizing(sizing!(fixed!(-100.0), fixed!(50.0))),
             |k| k,
         )
@@ -27,7 +27,7 @@ fn negative_fixed_width() {
 fn negative_fixed_height() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new().sizing(sizing!(fixed!(100.0), fixed!(-50.0))),
             |k| k,
         )
@@ -40,7 +40,7 @@ fn negative_fixed_height() {
 #[should_panic(expected = "Negative")]
 fn negative_growth_factor() {
     let kaolin = Kaolin::new((800, 600), measure_text);
-    kaolin.draw::<()>(|k| k.with(FlexStyle::new().sizing(sizing!(grow!(-1.0))), |k| k));
+    kaolin.draw::<()>(|k| k.styled(FlexStyle::new().sizing(sizing!(grow!(-1.0))), |k| k));
 }
 
 /// Tests behavior with extremely large fixed sizes.
@@ -49,7 +49,7 @@ fn negative_growth_factor() {
 fn very_large_fixed_sizes() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new().sizing(sizing!(fixed!(1_000_000.0), fixed!(1_000_000.0))),
             |k| k,
         )
@@ -65,7 +65,7 @@ fn very_large_fixed_sizes() {
 fn very_small_positive_sizes() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new().sizing(sizing!(fixed!(0.001), fixed!(0.001))),
             |k| k,
         )
@@ -82,7 +82,7 @@ fn very_small_positive_sizes() {
 fn invalid_fit_constraints() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new().sizing(sizing!(fit!(-10.0, 100.0))), // negative min
             |k| k,
         )
@@ -95,8 +95,8 @@ fn invalid_fit_constraints() {
 fn conflicting_sizing_requirements() {
     let kaolin = Kaolin::new((100, 100), measure_text); // Small viewport
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(FlexStyle::new().sizing(sizing!(fixed!(200.0))), |k| k) // Larger than viewport
-            .with(FlexStyle::new().sizing(sizing!(fixed!(200.0))), |k| k) // Another large element
+        k.styled(FlexStyle::new().sizing(sizing!(fixed!(200.0))), |k| k) // Larger than viewport
+            .styled(FlexStyle::new().sizing(sizing!(fixed!(200.0))), |k| k) // Another large element
     });
 
     // Should not panic but may produce overlapping or constrained elements
@@ -111,7 +111,7 @@ fn conflicting_sizing_requirements() {
 fn malformed_text_input() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let commands = kaolin.draw::<()>(|k| {
-        k.with(FlexStyle::new()
+        k.styled(FlexStyle::new()
         .sizing(sizing!(grow!()))
         .layout(
           Layout::new()
@@ -143,7 +143,7 @@ fn malformed_text_input() {
 fn layout_calculation_edge_cases() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
                 .layout(Layout::new().gap(f64::MAX)), // Extremely large gap

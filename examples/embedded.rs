@@ -40,7 +40,7 @@ fn main() {
     let mut display = SimulatorDisplay::<BinaryColor>::new(Size::new(128, 64));
     let renderer = EmbeddedRenderer::new(&FONTS, display.bounding_box());
     renderer.onto(&mut display).draw(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .background_color(BinaryColor::Off)
                 .layout(
@@ -52,7 +52,7 @@ fn main() {
                 )
                 .sizing(sizing!(grow!())),
             |k| {
-                k.with(FlexStyle::new().layout(Layout::new().gap(4.0)), |k| {
+                k.styled(FlexStyle::new().layout(Layout::new().gap(4.0)), |k| {
                     k.text(
                         "Hello, World!",
                         TextStyle::new().font_id(1).color(BinaryColor::On),

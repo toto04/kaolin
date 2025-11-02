@@ -34,7 +34,7 @@ fn render_text_element() {
 fn render_empty_flex_container() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new().sizing(sizing!(fixed!(800.0), fixed!(600.0))),
             |k| k,
         )
@@ -82,7 +82,7 @@ fn render_text_with_custom_font() {
 fn render_container_with_text() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new().sizing(sizing!(fixed!(200.0), fixed!(100.0))),
             |k| k.text("Inside", TextStyle::new()),
         )
@@ -161,7 +161,7 @@ fn render_multiple_text_elements() {
 fn render_fit_to_content_container() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let commands = kaolin.draw::<()>(|k| {
-        k.with(FlexStyle::new(), |k| {
+        k.styled(FlexStyle::new(), |k| {
             k.text("Auto Size", TextStyle::new()) // 90px wide, 20px tall
         })
     });

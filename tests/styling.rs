@@ -12,7 +12,7 @@ use common::*;
 fn basic_border_rendering() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(200.0), fixed!(100.0)))
                 .border(Border::new().width(5.0).color(TestColor::Red)),
@@ -36,7 +36,7 @@ fn basic_border_rendering() {
 fn corner_radius_rendering() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(200.0), fixed!(100.0)))
                 .corner_radius(15.0),
@@ -59,7 +59,7 @@ fn corner_radius_rendering() {
 fn background_color_rendering() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(200.0), fixed!(100.0)))
                 .background_color(TestColor::Red),
@@ -82,7 +82,7 @@ fn background_color_rendering() {
 fn combined_styling_properties() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(300.0), fixed!(200.0)))
                 .background_color(TestColor::Red)
@@ -119,7 +119,7 @@ fn combined_styling_properties() {
 fn padding_with_styling() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(200.0), fixed!(100.0)))
                 .padding(Padding::all(20.0))
@@ -138,7 +138,7 @@ fn padding_with_styling() {
 fn asymmetric_padding() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(400.0), fixed!(300.0)))
                 .padding(Padding::new(10.0, 20.0, 15.0, 25.0)), // left, right, top, bottom
@@ -156,7 +156,7 @@ fn asymmetric_padding() {
 fn padding_with_vertical_layout() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(200.0), fixed!(300.0)))
                 .padding(Padding::all(30.0))
@@ -179,7 +179,7 @@ fn padding_with_vertical_layout() {
 fn styling_with_color_inheritance() {
     let kaolin = Kaolin::new((800, 600), measure_text);
     let mut commands = kaolin.draw::<()>(|k| {
-        k.with(
+        k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(300.0), fixed!(200.0)))
                 .color(TestColor::Red)
