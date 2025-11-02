@@ -3,6 +3,8 @@
 #[doc = include_str!("../README.md")]
 extern crate alloc;
 
+pub(crate) mod utils;
+
 pub mod commands;
 pub mod elements;
 pub mod kaolin;

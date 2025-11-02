@@ -1,20 +1,21 @@
 //! Internal representation of the layout elements.
 
-pub(crate) mod flexbox;
-pub(crate) mod text;
-pub mod traits;
-pub use traits::*;
-
 use alloc::{
     boxed::Box,
     string::{String, ToString},
     vec::Vec,
 };
-use uuid::Uuid;
+
+pub mod traits;
+
+pub(crate) mod flexbox;
+pub(crate) mod text;
+pub use traits::*;
 
 use crate::{
     commands::RenderCommand,
     style::sizing::{PreferredSize, SizingDimensions},
+    utils::uuid,
 };
 
 /// A node in the layout tree
@@ -43,7 +44,7 @@ where
         element: impl KaolinElement<'frame, Color, CustomData> + 'frame,
         id: Option<String>,
     ) -> Self {
-        let id = id.unwrap_or_else(|| Uuid::new_v4().to_string());
+        let id = id.unwrap_or_else(|| uuid::new_v4().to_string());
         let (width, height) = element.get_sizing_dimensions();
         KaolinNode {
             id,
