@@ -7,6 +7,7 @@ use kaolin::{
 };
 use test::{Bencher, black_box};
 
+#[path = "../tests/common.rs"]
 mod common;
 use common::*;
 

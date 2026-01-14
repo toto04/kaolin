@@ -6,9 +6,12 @@ use alloc::{collections::VecDeque, string::String};
 
 use crate::{elements::flexbox::FlexBox, style::border};
 
+/// Placeholder for when [RenderCommand::Custom] isn't used.
+pub enum Nothing {}
+
 /// A single rendering command.
 #[derive(Debug, Clone)]
-pub enum RenderCommand<Color, CustomData = !>
+pub enum RenderCommand<Color, CustomData = Nothing>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
