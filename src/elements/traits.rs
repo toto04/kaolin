@@ -1,5 +1,6 @@
 use alloc::boxed::Box;
 
+use crate::commands::Nothing;
 use crate::elements::KaolinNode;
 use crate::elements::RenderCommand;
 use crate::style::sizing::PreferredSize;
@@ -14,7 +15,7 @@ use crate::style::sizing::SizingDimensions;
 /// although that data will need to be consistent across all elements for a specific renderer.
 ///
 /// For elements that can contain other elements, also implement the [`KaolinContainerElement`] trait.
-pub trait KaolinElement<'frame, Color, CustomData = !>
+pub trait KaolinElement<'frame, Color, CustomData = Nothing>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
