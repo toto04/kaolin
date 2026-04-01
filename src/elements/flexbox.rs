@@ -1,4 +1,4 @@
-use alloc::{boxed::Box, string::ToString, vec::Vec};
+use alloc::boxed::Box;
 use core::{cmp::min_by, ops::Add};
 
 use crate::{
@@ -80,17 +80,16 @@ where
                 };
 
                 // get the list of children that have the current extreme width
-                let currently_modifying = modifiable_children
+                let mut currently_modifying = modifiable_children
                     .iter_mut()
-                    .filter(|c| c.current_width == extreme)
-                    .collect::<Vec<_>>();
+                    .filter(|c| c.current_width == extreme);
 
                 //  total factor for dividing the available space
                 let total_factor = if shrinking {
-                    currently_modifying.len() as f64
+                    currently_modifying.by_ref().count() as f64
                 } else {
                     currently_modifying
-                        .iter()
+                        .by_ref()
                         .map(|c| c.get_grow_factor().0)
                         .sum::<f64>()
                 };
@@ -166,12 +165,11 @@ where
                 let (smallest, second_smallest) =
                     KaolinNodes::get_smallest_heights(&growable_children);
 
-                let growing = growable_children
+                let mut growing = growable_children
                     .iter_mut()
-                    .filter(|c| c.current_height == smallest)
-                    .collect::<Vec<_>>();
+                    .filter(|c| c.current_height == smallest);
 
-                let total_factor = growing.iter().map(|c| c.get_grow_factor().1).sum::<f64>();
+                let total_factor = growing.by_ref().map(|c| c.get_grow_factor().1).sum::<f64>();
                 if total_factor > 0.0 {
                     let grow_amount = remaining.min(second_smallest - smallest) / total_factor;
                     for child in growing {
@@ -309,7 +307,6 @@ where
         size: (f64, f64),
     ) -> Box<dyn Iterator<Item = RenderCommand<Color, CustomData>> + '_> {
         let self_command = RenderCommand::DrawRectangle {
-            id: "".to_string(),
             x: offsets.0,
             y: offsets.1,
             width: size.0,

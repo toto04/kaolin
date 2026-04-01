@@ -1,3 +1,4 @@
+#![feature(anonymous_lifetime_in_impl_trait)]
 #![feature(never_type)]
 #![no_std]
 #[doc = include_str!("../README.md")]

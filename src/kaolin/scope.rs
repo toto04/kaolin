@@ -80,7 +80,7 @@ where
         let child_scope = KaolinScope::new(child_flex, self.measure_text.clone());
         let modified_scope = contents(child_scope);
         let child_flex = modified_scope.conclude();
-        self.flex.add_child(KaolinNode::new(child_flex, None));
+        self.flex.add_child(KaolinNode::new(child_flex));
         self
     }
 
@@ -120,7 +120,7 @@ where
             .unwrap_or(Color::default_foreground_color());
         text_element.inherit_color(color);
 
-        self.flex.add_child(KaolinNode::new(text_element, None));
+        self.flex.add_child(KaolinNode::new(text_element));
         self
     }
 
@@ -135,7 +135,7 @@ where
         mut self,
         element: &'frame Element,
     ) -> Self {
-        self.flex.add_child(KaolinNode::new(*element, None));
+        self.flex.add_child(KaolinNode::new(*element));
         self
     }
 }

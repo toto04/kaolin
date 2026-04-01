@@ -1,10 +1,6 @@
 //! Internal representation of the layout elements.
 
-use alloc::{
-    boxed::Box,
-    string::{String, ToString},
-    vec::Vec,
-};
+use alloc::{boxed::Box, vec::Vec};
 
 pub mod traits;
 
@@ -15,7 +11,6 @@ pub use traits::*;
 use crate::{
     commands::RenderCommand,
     style::sizing::{PreferredSize, SizingDimensions},
-    utils::uuid,
 };
 
 /// A node in the layout tree
@@ -24,7 +19,7 @@ where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     #[allow(dead_code)]
-    id: String,
+    // id: String,
     growable_width: bool,
     growable_height: bool,
     shrinkable: bool,
@@ -40,14 +35,11 @@ impl<'frame, Color, CustomData> KaolinNode<'frame, Color, CustomData>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
-    pub(crate) fn new(
-        element: impl KaolinElement<'frame, Color, CustomData> + 'frame,
-        id: Option<String>,
-    ) -> Self {
-        let id = id.unwrap_or_else(|| uuid::new_v4().to_string());
+    pub(crate) fn new(element: impl KaolinElement<'frame, Color, CustomData> + 'frame) -> Self {
+        // let id = id.unwrap_or_else(|| uuid::new_v4().to_string());
         let (width, height) = element.get_sizing_dimensions();
         KaolinNode {
-            id,
+            // id,
             growable_width: element.default_growable_width(&width),
             growable_height: element.default_growable_height(&height),
             shrinkable: element.default_shrinkable(&width),
@@ -182,9 +174,7 @@ where
 
     /// Looks for the smallest and second smallest widths among the children.
     /// Important to make sure all children grow together.
-    fn get_smallest_widths(
-        children: &Vec<&mut KaolinNode<'frame, Color, CustomData>>,
-    ) -> (f64, f64) {
+    fn get_smallest_widths(children: &Vec<&mut KaolinNode<Color, CustomData>>) -> (f64, f64) {
         let mut smallest = f64::INFINITY;
         let mut second_smallest = f64::INFINITY;
         for node in children {

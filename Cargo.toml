@@ -30,7 +30,7 @@ clay-layout = { version = "0.4.0" }
 embedded-graphics-simulator = "0.7.0"
 
 [profile.bench]
-debug = true
+debug = "line-tables-only"
 
 [[example]]
 name = "embedded"

@@ -43,7 +43,6 @@ fn render_empty_flex_container() {
     assert_eq!(
         commands.collect::<Vec<_>>(),
         vec![RenderCommand::DrawRectangle {
-            id: "".to_string(),
             color: TestColor::Transparent,
             x: 0.0,
             y: 0.0,
@@ -92,7 +91,6 @@ fn render_container_with_text() {
         commands.collect::<Vec<_>>(),
         vec![
             RenderCommand::DrawRectangle {
-                id: "".to_string(),
                 color: TestColor::Transparent,
                 x: 0.0,
                 y: 0.0,
@@ -170,7 +168,6 @@ fn render_fit_to_content_container() {
         commands.collect::<Vec<_>>(),
         vec![
             RenderCommand::DrawRectangle {
-                id: "".to_string(),
                 color: TestColor::Transparent,
                 x: 0.0,
                 y: 0.0,

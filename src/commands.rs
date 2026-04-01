@@ -14,7 +14,6 @@ where
 {
     /// Draws a rectangle on the screen.
     DrawRectangle {
-        id: String,
         /// The absolute x position of the rectangle.
         x: f64,
         /// The absolute y position of the rectangle.
@@ -55,8 +54,6 @@ where
 
     /// A custom render command, which carries arbitrary data for the renderer to interpret.
     Custom {
-        /// not implemented yet
-        id: String,
         /// The absolute x position of the custom element.
         x: f64,
         /// The absolute y position of the custom element.

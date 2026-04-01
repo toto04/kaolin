@@ -1,6 +1,6 @@
 use core::iter;
 
-use alloc::{boxed::Box, string::ToString};
+use alloc::boxed::Box;
 use embedded_graphics::{
     image::{Image, ImageDrawable},
     prelude::{Dimensions, PixelColor},
@@ -43,7 +43,6 @@ where
         dyn Iterator<Item = crate::commands::RenderCommand<Color, Image<'frame, I>>> + '_,
     > {
         Box::new(iter::once(RenderCommand::Custom {
-            id: "".to_string(),
             x: offsets.0,
             y: offsets.1,
             width: size.0,
