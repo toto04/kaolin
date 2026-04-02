@@ -1,5 +1,7 @@
 use derive_setters::Setters;
 
+use crate::utils::floats::Float;
+
 #[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum Direction {
     /// Default. Lays out elements from left to right.
@@ -81,7 +83,7 @@ pub struct Layout {
     /// The justification of child elements along the main axis.
     pub justification: Justification,
     /// The gap between child elements.
-    pub gap: f64,
+    pub gap: Float,
 }
 
 impl Layout {

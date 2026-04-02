@@ -29,19 +29,20 @@ use crate::{
     elements::flexbox::FlexBox,
     fixed, sizing,
     style::{FlexStyle, TextStyle},
+    utils::floats::Float,
 };
 
 pub mod scope;
 
-pub type MeasureTextFnStatic<Color> = Box<dyn Fn(&str, &TextStyle<Color>) -> (f64, f64)>;
+pub type MeasureTextFnStatic<Color> = Box<dyn Fn(&str, &TextStyle<Color>) -> (Float, Float)>;
 pub(crate) type MeasureTextFnRef<Color> = Weak<MeasureTextFnStatic<Color>>;
 
 pub struct Kaolin<Color>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
-    width: f64,
-    height: f64,
+    width: Float,
+    height: Float,
     measure_text: Rc<MeasureTextFnStatic<Color>>,
 }
 
@@ -52,13 +53,13 @@ where
     /// Creates a new instance of Kaolin with the specified window dimensions and text measurement function.
     pub fn new(
         window_dimensions: (i32, i32),
-        measure_text: impl Fn(&str, &TextStyle<Color>) -> (f64, f64) + 'static,
+        measure_text: impl Fn(&str, &TextStyle<Color>) -> (Float, Float) + 'static,
     ) -> Self {
         let (width, height) = window_dimensions;
         let measure_text: Rc<MeasureTextFnStatic<Color>> = Rc::new(Box::new(measure_text));
         Kaolin {
-            width: width as f64,
-            height: height as f64,
+            width: width as Float,
+            height: height as Float,
             measure_text,
         }
     }

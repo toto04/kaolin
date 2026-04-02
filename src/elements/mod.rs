@@ -11,6 +11,7 @@ pub use traits::*;
 use crate::{
     commands::RenderCommand,
     style::sizing::{PreferredSize, SizingDimensions},
+    utils::floats::Float,
 };
 
 /// A node in the layout tree
@@ -25,10 +26,10 @@ where
     shrinkable: bool,
     element: Box<dyn KaolinElement<'frame, Color, CustomData> + 'frame>,
     sizing: (SizingDimensions, SizingDimensions),
-    current_width: f64,
-    current_height: f64,
-    x: f64,
-    y: f64,
+    current_width: Float,
+    current_height: Float,
+    x: Float,
+    y: Float,
 }
 
 impl<'frame, Color, CustomData> KaolinNode<'frame, Color, CustomData>
@@ -53,7 +54,7 @@ where
     }
 
     /// Returns the growth factors for calculations during the growing phase.
-    pub fn get_grow_factor(&self) -> (f64, f64) {
+    pub fn get_grow_factor(&self) -> (Float, Float) {
         let w_factor = match self.sizing.0.preferred {
             PreferredSize::Grow(factor) => factor.into(),
             _ => 0.0, // Default grow factor if not specified
@@ -70,7 +71,7 @@ where
     ///
     /// The returned value differs from the input value only if the element was
     /// constrained by its minimum or maximum size.
-    fn grow_width(&mut self, limit: f64) -> f64 {
+    fn grow_width(&mut self, limit: Float) -> Float {
         let amount = self.sizing.0.clamped(self.current_width + limit) - self.current_width;
         if self.growable_width && amount > 0.0 {
             self.current_width += amount;
@@ -97,7 +98,7 @@ where
     ///
     /// The returned value differs from the input value only if the element was
     /// constrained by its maximum size.
-    fn grow_height(&mut self, limit: f64) -> f64 {
+    fn grow_height(&mut self, limit: Float) -> Float {
         debug_assert!(limit > 0.0, "Height can only grow, never shrink");
         let amount = self.sizing.1.clamped(self.current_height + limit) - self.current_height;
         if self.growable_height && amount > 0.0 {
@@ -112,14 +113,14 @@ where
     }
 
     /// Fits the height of the element to its content.
-    fn fit_height(&mut self, final_width: f64) {
+    fn fit_height(&mut self, final_width: Float) {
         let height = self.sizing.1;
         self.current_height = height.clamped(self.element.fit_height_unbound(final_width));
     }
 
     /// ### Sets the position of the element, and propagates the change to its children.
     /// This gets called after all sizing calculations are complete.
-    pub fn set_position(&mut self, x: f64, y: f64) {
+    pub fn set_position(&mut self, x: Float, y: Float) {
         self.x = x;
         self.y = y;
         self.element
@@ -174,9 +175,9 @@ where
 
     /// Looks for the smallest and second smallest widths among the children.
     /// Important to make sure all children grow together.
-    fn get_smallest_widths(children: &Vec<&mut KaolinNode<Color, CustomData>>) -> (f64, f64) {
-        let mut smallest = f64::INFINITY;
-        let mut second_smallest = f64::INFINITY;
+    fn get_smallest_widths(children: &Vec<&mut KaolinNode<Color, CustomData>>) -> (Float, Float) {
+        let mut smallest = Float::INFINITY;
+        let mut second_smallest = Float::INFINITY;
         for node in children {
             if node.current_width < smallest {
                 second_smallest = smallest;
@@ -190,9 +191,9 @@ where
 
     /// Looks for the smallest and second smallest heights among the children.
     /// Important to make sure all children grow together.
-    fn get_smallest_heights(children: &Vec<&mut KaolinNode<Color, CustomData>>) -> (f64, f64) {
-        let mut smallest = f64::INFINITY;
-        let mut second_smallest = f64::INFINITY;
+    fn get_smallest_heights(children: &Vec<&mut KaolinNode<Color, CustomData>>) -> (Float, Float) {
+        let mut smallest = Float::INFINITY;
+        let mut second_smallest = Float::INFINITY;
         for node in children {
             if node.current_height < smallest {
                 second_smallest = smallest;
@@ -206,7 +207,7 @@ where
 
     /// Looks for the biggest and second biggest widths among the children.
     /// Important to make sure all children grow together.
-    fn get_biggest_widths(children: &Vec<&mut KaolinNode<Color, CustomData>>) -> (f64, f64) {
+    fn get_biggest_widths(children: &Vec<&mut KaolinNode<Color, CustomData>>) -> (Float, Float) {
         let mut biggest = 0.0;
         let mut second_biggest = 0.0;
         for node in children {
@@ -221,24 +222,24 @@ where
     }
 
     /// Returns the cumulative width of the child nodes.
-    fn get_cumulative_width(&self) -> f64 {
+    fn get_cumulative_width(&self) -> Float {
         self.nodes.iter().map(|c| c.current_width).sum()
     }
 
     /// Returns the maximum width of the child nodes.
-    fn get_max_width(&self) -> f64 {
+    fn get_max_width(&self) -> Float {
         self.nodes
             .iter()
             .fold(0.0, |acc, c| acc.max(c.current_width))
     }
 
     /// Returns the cumulative height of the child nodes.
-    fn get_cumulative_height(&self) -> f64 {
+    fn get_cumulative_height(&self) -> Float {
         self.nodes.iter().map(|c| c.current_height).sum()
     }
 
     /// Returns the maximum height of the child nodes.
-    fn get_max_height(&self) -> f64 {
+    fn get_max_height(&self) -> Float {
         self.nodes
             .iter()
             .fold(0.0, |acc, c| acc.max(c.current_height))

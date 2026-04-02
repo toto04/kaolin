@@ -12,6 +12,7 @@ use crate::{
         layout::{Alignment, Direction, Justification},
         sizing::SizingDimensions,
     },
+    utils::floats::Float,
 };
 
 pub(crate) struct FlexBox<'frame, Color, CustomData>
@@ -35,12 +36,12 @@ where
         }
     }
 
-    fn get_cumulative_gaps(&self) -> f64 {
-        self.children.gaps() as f64 * self.style.layout.gap
+    fn get_cumulative_gaps(&self) -> Float {
+        self.children.gaps() as Float * self.style.layout.gap
     }
 
     /// Fits the width of the flex container to its children, returning the new width.
-    fn fit_width_to_children(&self) -> f64 {
+    fn fit_width_to_children(&self) -> Float {
         match self.style.layout.direction {
             Direction::LeftToRight | Direction::RightToLeft => {
                 self.children.get_cumulative_width()
@@ -54,7 +55,7 @@ where
     }
 
     /// Grows the width of all child elements to fit the container.
-    pub(crate) fn grow_children_width(&mut self, current_width: f64) {
+    pub(crate) fn grow_children_width(&mut self, current_width: Float) {
         if self.style.has_horizontal_layout() {
             let cum_width = self.children.get_cumulative_width(); // lmao
             let mut remaining =
@@ -69,7 +70,7 @@ where
                 self.children.get_growable_children_w()
             };
 
-            while remaining.abs() > 0.0 && !modifiable_children.is_empty() {
+            while remaining.abs() > 1.0 && !modifiable_children.is_empty() {
                 let mut total_change = 0.0;
                 // Get the current extreme widths
                 // the extreme is the starting point for the growth/shrinking, the second extreme is the stopping point for this iteration
@@ -79,19 +80,18 @@ where
                     KaolinNodes::get_smallest_widths(&modifiable_children)
                 };
 
-                // get the list of children that have the current extreme width
-                let mut currently_modifying = modifiable_children
-                    .iter_mut()
-                    .filter(|c| c.current_width == extreme);
+                let modifying =
+                    |c: &&mut &mut KaolinNode<Color, CustomData>| c.current_width == extreme;
 
                 //  total factor for dividing the available space
                 let total_factor = if shrinking {
-                    currently_modifying.by_ref().count() as f64
+                    modifiable_children.iter_mut().filter(modifying).count() as Float
                 } else {
-                    currently_modifying
-                        .by_ref()
+                    modifiable_children
+                        .iter_mut()
+                        .filter(modifying)
                         .map(|c| c.get_grow_factor().0)
-                        .sum::<f64>()
+                        .sum::<Float>()
                 };
 
                 if total_factor <= 0.0 {
@@ -102,10 +102,10 @@ where
                 let change_amount = min_by(remaining, second_extreme - extreme, |a, b| {
                     a.abs()
                         .partial_cmp(&b.abs())
-                        .unwrap_or_else(|| panic!("wtf"))
+                        .expect("None in partial comparison when growing child width")
                 }) / total_factor;
 
-                for child in currently_modifying {
+                for child in modifiable_children.iter_mut().filter(modifying) {
                     // how much of the base change amount should this child get?
                     let factor = if shrinking {
                         1.0
@@ -145,7 +145,7 @@ where
     }
 
     /// Grows the height of all child elements to fit the container.
-    pub(crate) fn grow_children_height(&mut self, current_height: f64) {
+    pub(crate) fn grow_children_height(&mut self, current_height: Float) {
         if self.style.has_horizontal_layout() {
             self.children.nodes().for_each(|child| {
                 let remaining = current_height - child.current_height - self.style.padding.y();
@@ -165,14 +165,18 @@ where
                 let (smallest, second_smallest) =
                     KaolinNodes::get_smallest_heights(&growable_children);
 
-                let mut growing = growable_children
-                    .iter_mut()
-                    .filter(|c| c.current_height == smallest);
+                let growing = |c: &&mut &mut KaolinNode<'frame, Color, CustomData>| {
+                    c.current_height == smallest
+                };
 
-                let total_factor = growing.by_ref().map(|c| c.get_grow_factor().1).sum::<f64>();
+                let total_factor = growable_children
+                    .iter_mut()
+                    .filter(growing)
+                    .map(|c| c.get_grow_factor().1)
+                    .sum::<Float>();
                 if total_factor > 0.0 {
                     let grow_amount = remaining.min(second_smallest - smallest) / total_factor;
-                    for child in growing {
+                    for child in growable_children.iter_mut().filter(growing) {
                         let factor = child.get_grow_factor().1;
                         let grow = child.grow_height(grow_amount * factor);
                         total_growth += grow;
@@ -189,14 +193,14 @@ where
 
     /// Positions the child elements within the flex container.
     /// Called after all sizing calculations are complete.
-    pub(crate) fn position_children(&mut self, offsets: (f64, f64, f64, f64)) {
+    pub(crate) fn position_children(&mut self, offsets: (Float, Float, Float, Float)) {
         let (left, right, top, bottom) = offsets;
 
         let (tot_main_dimension, tot_cross_dimension) =
             self.style.switch_axis((right - left, bottom - top));
 
         // number of gaps between children
-        let n_gaps = self.children.gaps() as f64;
+        let n_gaps = self.children.gaps() as Float;
         // cumulative space occupied by the children in the main axis
         let cum_dimension = if self.style.has_horizontal_layout() {
             self.children.get_cumulative_width()
@@ -283,7 +287,7 @@ where
         (width, height)
     }
 
-    fn fit_height_unbound(&mut self, _final_width: f64) -> f64 {
+    fn fit_height_unbound(&mut self, _final_width: Float) -> Float {
         if self.style.has_horizontal_layout() {
             self.children.get_max_height().add(self.style.padding.y())
         } else {
@@ -293,18 +297,18 @@ where
         }
     }
 
-    fn starting_width(&self, sizing: &SizingDimensions) -> f64 {
+    fn starting_width(&self, sizing: &SizingDimensions) -> Float {
         sizing.clamped(self.fit_width_to_children())
     }
 
-    fn propagate_position(&mut self, offsets: (f64, f64), size: (f64, f64)) {
+    fn propagate_position(&mut self, offsets: (Float, Float), size: (Float, Float)) {
         self.position_children((offsets.0, offsets.0 + size.0, offsets.1, offsets.1 + size.1));
     }
 
     fn render(
         &self,
-        offsets: (f64, f64),
-        size: (f64, f64),
+        offsets: (Float, Float),
+        size: (Float, Float),
     ) -> Box<dyn Iterator<Item = RenderCommand<Color, CustomData>> + '_> {
         let self_command = RenderCommand::DrawRectangle {
             x: offsets.0,
@@ -337,11 +341,11 @@ where
         self.children.push(child);
     }
 
-    fn propagate_width_growth(&mut self, parent_width: f64) {
+    fn propagate_width_growth(&mut self, parent_width: Float) {
         self.grow_children_width(parent_width);
     }
 
-    fn propagate_height_growth(&mut self, parent_height: f64) {
+    fn propagate_height_growth(&mut self, parent_height: Float) {
         self.grow_children_height(parent_height);
     }
 }

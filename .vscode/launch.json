@@ -1,0 +1,186 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug unit tests in library 'kaolin'",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": [
+          "test"
+        ]
+      }
+    },
+    {
+      "name": "Debug example 'embedded'",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": [
+          "run",
+          "--example=embedded",
+          "--features=embedded"
+        ]
+      },
+      "args": []
+    },
+    {
+      "name": "Debug unit tests in example 'embedded'",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": [
+          "test",
+          "--example=embedded"
+        ]
+      }
+    },
+    {
+      "name": "Debug example 'raylib'",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": [
+          "run",
+          "--example=raylib"
+        ]
+      },
+      "args": []
+    },
+    {
+      "name": "Debug unit tests in example 'raylib'",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": [
+          "test",
+          "--example=raylib"
+        ]
+      }
+    },
+    {
+      "name": "Debug integration test 'alignment_and_justification'",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": [
+          "test",
+          "--test=alignment_and_justification"
+        ]
+      }
+    },
+    {
+      "name": "Debug integration test 'basic_rendering'",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": [
+          "test",
+          "--test=basic_rendering"
+        ]
+      }
+    },
+    {
+      "name": "Debug integration test 'bench'",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": [
+          "test",
+          "--test=bench"
+        ]
+      }
+    },
+    {
+      "name": "Debug integration test 'color_inheritance'",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": [
+          "test",
+          "--test=color_inheritance"
+        ]
+      }
+    },
+    {
+      "name": "Debug integration test 'common'",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": [
+          "test",
+          "--test=common"
+        ]
+      }
+    },
+    {
+      "name": "Debug integration test 'error_handling'",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": [
+          "test",
+          "--test=error_handling"
+        ]
+      }
+    },
+    {
+      "name": "Debug integration test 'gaps_and_spacing'",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": [
+          "test",
+          "--test=gaps_and_spacing"
+        ]
+      }
+    },
+    {
+      "name": "Debug integration test 'nested_containers'",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": [
+          "test",
+          "--test=nested_containers"
+        ]
+      }
+    },
+    {
+      "name": "Debug integration test 'sizing_behavior'",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": [
+          "test",
+          "--test=sizing_behavior"
+        ]
+      }
+    },
+    {
+      "name": "Debug integration test 'styling'",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": [
+          "test",
+          "--test=styling"
+        ]
+      }
+    },
+    {
+      "name": "Debug integration test 'text_wrapping'",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": [
+          "test",
+          "--test=text_wrapping"
+        ]
+      }
+    }
+  ]
+}

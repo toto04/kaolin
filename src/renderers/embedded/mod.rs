@@ -5,6 +5,7 @@ use crate::{
     kaolin::{Kaolin, scope::KaolinScope},
     renderers::KaolinRenderer,
     style::KaolinColor,
+    utils::floats::Float,
 };
 use embedded_graphics::{
     image::Image,
@@ -50,7 +51,7 @@ where
                     .get_rendered_dimensions(text, (0, 0).into(), VerticalPosition::Top)
                     .unwrap_or_else(|_| RenderedDimensions::empty());
                 match dimensions.bounding_box {
-                    Some(box_) => (box_.size.width as f64, box_.size.height as f64),
+                    Some(box_) => (box_.size.width as Float, box_.size.height as Float),
                     None => (0.0, 0.0),
                 }
             },

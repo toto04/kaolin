@@ -4,7 +4,7 @@
 
 use alloc::{collections::VecDeque, string::String};
 
-use crate::{elements::flexbox::FlexBox, style::border};
+use crate::{elements::flexbox::FlexBox, style::border, utils::floats::Float};
 
 /// A single rendering command.
 #[derive(Debug, Clone)]
@@ -15,17 +15,17 @@ where
     /// Draws a rectangle on the screen.
     DrawRectangle {
         /// The absolute x position of the rectangle.
-        x: f64,
+        x: Float,
         /// The absolute y position of the rectangle.
-        y: f64,
+        y: Float,
         /// The width of the rectangle.
-        width: f64,
+        width: Float,
         /// The height of the rectangle.
-        height: f64,
+        height: Float,
         /// The background color of the rectangle.
         color: Color,
         /// The corner radius of the rectangle.
-        corner_radius: f32,
+        corner_radius: Float,
         /// The border settings of the rectangle (width, color).
         border: border::Border<Color>,
     },
@@ -40,14 +40,14 @@ where
         /// calculations are performed with `&str` slices.
         text: String,
         /// The absolute x position of the text.  
-        x: f64,
+        x: Float,
         /// The absolute y position of the text.
-        y: f64,
+        y: Float,
         /// The font ID of the text, passed through from the style.
         /// Interpretation of this value depends on the renderer.
         font_id: u32,
         /// The font size of the text.
-        font_size: f32,
+        font_size: Float,
         /// The color of the text.
         color: Color,
     },
@@ -55,13 +55,13 @@ where
     /// A custom render command, which carries arbitrary data for the renderer to interpret.
     Custom {
         /// The absolute x position of the custom element.
-        x: f64,
+        x: Float,
         /// The absolute y position of the custom element.
-        y: f64,
+        y: Float,
         /// The width of the custom element.
-        width: f64,
+        width: Float,
         /// The height of the custom element.
-        height: f64,
+        height: Float,
         /// The custom data associated with the element.
         data: CustomData,
     },

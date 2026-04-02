@@ -5,12 +5,12 @@ use embedded_graphics::{
     image::{Image, ImageDrawable},
     prelude::{Dimensions, PixelColor},
 };
-use typed_floats::tf64::PositiveFinite;
 
 use crate::{
     commands::RenderCommand,
     elements::KaolinElement,
     style::{KaolinColor, sizing},
+    utils::floats::PositiveFinite,
 };
 
 /// Implementation of KaolinElement for embedded-graphics Image
@@ -37,8 +37,8 @@ where
 
     fn render(
         &self,
-        offsets: (f64, f64),
-        size: (f64, f64),
+        offsets: (f32, f32),
+        size: (f32, f32),
     ) -> alloc::boxed::Box<
         dyn Iterator<Item = crate::commands::RenderCommand<Color, Image<'frame, I>>> + '_,
     > {

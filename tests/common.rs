@@ -20,8 +20,8 @@ impl KaolinColor for TestColor {
 }
 
 #[allow(dead_code)]
-pub fn measure_text(text: &str, _config: &TextStyle<TestColor>) -> (f64, f64) {
-    (text.len() as f64 * 10.0, 20.0)
+pub fn measure_text(text: &str, _config: &TextStyle<TestColor>) -> (f32, f32) {
+    (text.len() as f32 * 10.0, 20.0)
 }
 
 #[macro_export]

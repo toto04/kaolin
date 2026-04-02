@@ -4,6 +4,7 @@ use crate::elements::KaolinNode;
 use crate::elements::RenderCommand;
 use crate::style::sizing::PreferredSize;
 use crate::style::sizing::SizingDimensions;
+use crate::utils::floats::Float;
 
 /// This trait represents a generic UI element in the Kaolin layout system.
 ///
@@ -28,8 +29,8 @@ where
     /// over the render commands for the element (and its children if any).
     fn render(
         &self,
-        offsets: (f64, f64),
-        size: (f64, f64),
+        offsets: (Float, Float),
+        size: (Float, Float),
     ) -> Box<dyn Iterator<Item = RenderCommand<Color, CustomData>> + '_>;
 
     /// whether or not the element starts as growable in width, defaults to
@@ -49,7 +50,7 @@ where
     }
     /// Returns the initial width of the element based on its sizing configuration.
     /// By default, the preferred size is used if available, otherwise the minimum size is used.
-    fn starting_width(&self, sizing: &SizingDimensions) -> f64 {
+    fn starting_width(&self, sizing: &SizingDimensions) -> Float {
         match sizing.preferred {
             PreferredSize::Fixed(size) => size.into(),
             _ => sizing.min.into(),
@@ -57,7 +58,7 @@ where
     }
     /// Returns the initial height of the element based on its sizing configuration.
     /// By default, the preferred size is used if available, otherwise the minimum size is used.
-    fn starting_height(&self, sizing: &SizingDimensions) -> f64 {
+    fn starting_height(&self, sizing: &SizingDimensions) -> Float {
         match sizing.preferred {
             PreferredSize::Fixed(size) => size.into(),
             _ => sizing.min.into(),
@@ -71,7 +72,7 @@ where
     /// This function should not consider any bounds (minimum / maximum sizing)
     /// as the value will always be clamped to the element's sizing configuration.
     #[allow(unused_variables)]
-    fn fit_height_unbound(&mut self, final_width: f64) -> f64 {
+    fn fit_height_unbound(&mut self, final_width: Float) -> Float {
         0.0
     }
 
@@ -79,7 +80,7 @@ where
     /// propagated to the element contents. The offsets and size are the element's
     /// final values, which should be interpreted as absolute.
     #[allow(unused_variables)]
-    fn propagate_position(&mut self, offsets: (f64, f64), size: (f64, f64)) {}
+    fn propagate_position(&mut self, offsets: (Float, Float), size: (Float, Float)) {}
 
     /// This function can be overridden to inherit the color property from the parent element.
     /// Useful for elements like text, that should remain consistent with the parent if not otherwised specified.
@@ -119,7 +120,7 @@ where
     #[allow(private_interfaces)]
     fn add_child(&mut self, child: KaolinNode<'frame, Color, CustomData>);
     /// Propagates width growth to the container's children.
-    fn propagate_width_growth(&mut self, parent_width: f64);
+    fn propagate_width_growth(&mut self, parent_width: Float);
     /// Propagates height growth to the container's children.
-    fn propagate_height_growth(&mut self, parent_height: f64);
+    fn propagate_height_growth(&mut self, parent_height: Float);
 }

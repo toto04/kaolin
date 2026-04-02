@@ -1,6 +1,7 @@
 use kaolin::{
     Kaolin, fit, fixed, grow, sizing,
     style::{FlexStyle, TextStyle, layout::Layout},
+    utils::floats::Float,
 };
 
 mod common;
@@ -146,7 +147,7 @@ fn layout_calculation_edge_cases() {
         k.styled(
             FlexStyle::new()
                 .sizing(sizing!(fixed!(800.0), fixed!(600.0)))
-                .layout(Layout::new().gap(f64::MAX)), // Extremely large gap
+                .layout(Layout::new().gap(Float::MAX)), // Extremely large gap
             |k| {
                 k.text("First", TextStyle::new())
                     .text("Second", TextStyle::new())

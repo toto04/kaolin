@@ -1,6 +1,7 @@
-use typed_floats::tf64::{Positive, PositiveFinite};
-
-use crate::style::layout::Direction;
+use crate::{
+    style::layout::Direction,
+    utils::floats::{Float, Positive, PositiveFinite},
+};
 
 /// Represents the preferred sizing behavior for a specific Dimension.
 #[derive(Clone, Copy, Debug)]
@@ -30,7 +31,7 @@ impl Default for SizingDimensions {
         SizingDimensions {
             min: PositiveFinite::new(0.0).unwrap(),
             preferred: PreferredSize::default(),
-            max: Positive::new(f64::INFINITY).unwrap(), // No maximum limit
+            max: Positive::new(Float::INFINITY).unwrap(), // No maximum limit
         }
     }
 }
@@ -53,7 +54,7 @@ impl SizingDimensions {
     }
 
     /// Returns the growth factor for the dimension.
-    pub fn get_grow_factor(&self) -> f64 {
+    pub fn get_grow_factor(&self) -> Float {
         match self.preferred {
             PreferredSize::Grow(factor) => factor.into(),
             _ => 0.0, // Default grow factor if not specified
@@ -63,7 +64,7 @@ impl SizingDimensions {
     /// Returns the dimension value clamped between min and max.
     ///
     /// ```
-    /// # use typed_floats::tf64::{Positive, PositiveFinite};
+    /// # use kaolin::utils::floats::{Positive, PositiveFinite, Float};
     /// # use kaolin::style::sizing::{SizingDimensions, PreferredSize};
     /// let sized = SizingDimensions {
     ///     min: PositiveFinite::new(100.0).unwrap(),
@@ -74,22 +75,22 @@ impl SizingDimensions {
     /// assert_eq!(sized.clamped(50.0), 100.0);
     /// assert_eq!(sized.clamped(350.0), 300.0);
     ///
-    /// assert_eq!(sized.clamped(f64::NAN), 100.0); // NaN defaults to min
-    /// assert_eq!(sized.clamped(f64::INFINITY), 300.0);
-    /// assert_eq!(sized.clamped(f64::NEG_INFINITY), 100.0);
+    /// assert_eq!(sized.clamped(Float::NAN), 100.0); // NaN defaults to min
+    /// assert_eq!(sized.clamped(Float::INFINITY), 300.0);
+    /// assert_eq!(sized.clamped(Float::NEG_INFINITY), 100.0);
     /// ```
-    pub fn clamped(&self, value: f64) -> f64 {
+    pub fn clamped(&self, value: Float) -> Float {
         if value.is_nan() {
             return self.min.into(); // Default to min if value is NaN
         }
         value.clamp(self.min.into(), self.max.into())
     }
 
-    pub fn max(&self) -> f64 {
+    pub fn max(&self) -> Float {
         self.max.into()
     }
 
-    pub fn min(&self) -> f64 {
+    pub fn min(&self) -> Float {
         self.min.into()
     }
 }
@@ -196,7 +197,7 @@ impl From<Sizing> for SizingDimensions {
             Sizing::Fit { min, max } => SizingDimensions {
                 min: min.unwrap_or_default(),
                 preferred: PreferredSize::Fixed(min.unwrap_or_default()), // prefers to stay at the min i guess
-                max: max.unwrap_or(Positive::new(f64::INFINITY).unwrap()),
+                max: max.unwrap_or(Positive::new(Float::INFINITY).unwrap()),
             },
             Sizing::Fixed(size) => SizingDimensions {
                 min: size,
@@ -206,7 +207,7 @@ impl From<Sizing> for SizingDimensions {
             Sizing::Grow { factor, min, max } => SizingDimensions {
                 min: min.unwrap_or_default(),
                 preferred: PreferredSize::Grow(factor.unwrap_or(PositiveFinite::new(1.0).unwrap())),
-                max: max.unwrap_or(Positive::new(f64::INFINITY).unwrap()),
+                max: max.unwrap_or(Positive::new(Float::INFINITY).unwrap()),
             },
         }
     }
@@ -221,15 +222,15 @@ impl From<Sizing> for SizingDimensions {
 macro_rules! fit {
     ($min:expr, $max:expr) => {
         $crate::style::sizing::Sizing::Fit {
-            min: Some(typed_floats::tf64::PositiveFinite::new($min).unwrap()),
-            max: Some(typed_floats::tf64::Positive::new($max).unwrap()),
+            min: Some($crate::utils::floats::PositiveFinite::new($min).unwrap()),
+            max: Some($crate::utils::floats::Positive::new($max).unwrap()),
         }
     };
 
     ($max:expr) => {
         $crate::style::sizing::Sizing::Fit {
             min: None,
-            max: Some(typed_floats::tf64::Positive::new($max).unwrap()),
+            max: Some($crate::utils::floats::Positive::new($max).unwrap()),
         }
     };
 
@@ -248,7 +249,7 @@ macro_rules! fit {
 macro_rules! fixed {
     ($size:expr) => {
         $crate::style::sizing::Sizing::Fixed(
-            typed_floats::tf64::PositiveFinite::new($size).unwrap(),
+            $crate::utils::floats::PositiveFinite::new($size).unwrap(),
         )
     };
 }
@@ -264,15 +265,15 @@ macro_rules! fixed {
 macro_rules! grow {
     ($factor:expr, $min:expr, $max:expr) => {
         $crate::style::sizing::Sizing::Grow {
-            factor: Some(typed_floats::tf64::PositiveFinite::new($factor).unwrap()),
-            min: Some(typed_floats::tf64::PositiveFinite::new($min).unwrap()),
-            max: Some(typed_floats::tf64::Positive::new($max).unwrap()),
+            factor: Some($crate::utils::floats::PositiveFinite::new($factor).unwrap()),
+            min: Some($crate::utils::floats::PositiveFinite::new($min).unwrap()),
+            max: Some($crate::utils::floats::Positive::new($max).unwrap()),
         }
     };
 
     ($factor:expr) => {
         $crate::style::sizing::Sizing::Grow {
-            factor: Some(typed_floats::tf64::PositiveFinite::new($factor).unwrap()),
+            factor: Some($crate::utils::floats::PositiveFinite::new($factor).unwrap()),
             min: None,
             max: None,
         }

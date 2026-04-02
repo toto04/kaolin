@@ -34,11 +34,11 @@ impl RaylibRenderer {
         this: Weak<RefCell<RaylibHandle>>,
         text: &str,
         config: &TextStyle<Color>,
-    ) -> (f64, f64) {
+    ) -> (Float, Float) {
         let raylib = this.upgrade().unwrap();
         let raylib = raylib.borrow();
         let len = raylib.measure_text(text, config.font_size as i32);
-        (len as f64, config.font_size as f64)
+        (len as Float, config.font_size as Float)
     }
 
     pub fn new(width: i32, height: i32) -> Self {

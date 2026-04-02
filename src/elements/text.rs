@@ -3,7 +3,6 @@ use alloc::{
     string::{String, ToString},
     vec::Vec,
 };
-use typed_floats::tf64::Positive;
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
@@ -14,6 +13,7 @@ use crate::{
         TextStyle,
         sizing::{PreferredSize, SizingDimensions},
     },
+    utils::floats::{Float, Positive, PositiveFinite},
 };
 
 /// Represents a text element in the UI.
@@ -47,7 +47,7 @@ where
         }
     }
 
-    fn measure_text(&self, text: &str) -> (f64, f64) {
+    fn measure_text(&self, text: &str) -> (Float, Float) {
         if let Some(measure_text) = self.measure_text.upgrade() {
             (measure_text)(text, &self.style)
         } else {
@@ -56,47 +56,37 @@ where
     }
 
     /// Calculates the preferred size of the text element, without wrapping.
-    pub fn get_preferred_size(
-        &self,
-    ) -> (
-        typed_floats::tf64::PositiveFinite,
-        typed_floats::tf64::PositiveFinite,
-    ) {
-        let floats =
-            self.content
-                .lines()
-                .fold((0.0f64, 0.0f64), |(max_width, total_height), line| {
-                    let (width, height) = self.measure_text(line);
-                    (max_width.max(width), total_height + height)
-                });
+    pub fn get_preferred_size(&self) -> (PositiveFinite, PositiveFinite) {
+        let floats = self.content.lines().fold(
+            (0.0 as Float, 0.0 as Float),
+            |(max_width, total_height), line| {
+                let (width, height) = self.measure_text(line);
+                (max_width.max(width), total_height + height)
+            },
+        );
         (
-            typed_floats::tf64::PositiveFinite::new(floats.0).unwrap(),
-            typed_floats::tf64::PositiveFinite::new(floats.1).unwrap(),
+            PositiveFinite::new(floats.0).unwrap(),
+            PositiveFinite::new(floats.1).unwrap(),
         )
     }
 
     /// Calculates the minimum size the text can wrap to without overflowing.
-    pub fn get_minimum_size(
-        &self,
-    ) -> (
-        typed_floats::tf64::PositiveFinite,
-        typed_floats::tf64::PositiveFinite,
-    ) {
+    pub fn get_minimum_size(&self) -> (PositiveFinite, PositiveFinite) {
         let floats = self.content.split_whitespace().fold(
-            (0.0f64, 0.0f64),
+            (0.0 as Float, 0.0 as Float),
             |(min_width, min_height), word| {
                 let (width, height) = self.measure_text(word);
                 (min_width.max(width), min_height.max(height))
             },
         );
         (
-            typed_floats::tf64::PositiveFinite::new(floats.0).unwrap(),
-            typed_floats::tf64::PositiveFinite::new(floats.1).unwrap(),
+            PositiveFinite::new(floats.0).unwrap(),
+            PositiveFinite::new(floats.1).unwrap(),
         )
     }
 
     /// Wraps the text to fit within the specified width.
-    pub fn wrap_text(&mut self, current_width: f64) -> f64 {
+    pub fn wrap_text(&mut self, current_width: Float) -> Float {
         // what we should actually do is find the positions of newlines
         // for each line either split at the last whitespace if the line is too long or at the newline
         // save all the absolute positions of the splitpoints for rendering later
@@ -171,15 +161,15 @@ where
         let height = SizingDimensions {
             min: pref_height,
             preferred: PreferredSize::Fixed(pref_height),
-            max: Positive::new(f64::INFINITY).unwrap(),
+            max: Positive::new(Float::INFINITY).unwrap(),
         };
         (width, height)
     }
 
     fn render(
         &self,
-        offsets: (f64, f64),
-        _size: (f64, f64),
+        offsets: (Float, Float),
+        _size: (Float, Float),
     ) -> Box<dyn Iterator<Item = RenderCommand<Color, CustomData>> + '_> {
         let mut current_y = offsets.1;
         Box::new(self.lines.iter().filter_map(move |line_indices| {
@@ -219,7 +209,7 @@ where
         false
     }
 
-    fn fit_height_unbound(&mut self, final_width: f64) -> f64 {
+    fn fit_height_unbound(&mut self, final_width: Float) -> Float {
         self.wrap_text(final_width)
     }
 
