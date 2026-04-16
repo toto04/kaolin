@@ -1,5 +1,5 @@
 use alloc::boxed::Box;
-use core::{cmp::min_by, ops::Add};
+use core::ops::Add;
 
 use crate::{
     commands::RenderCommand,
@@ -14,6 +14,81 @@ use crate::{
     },
     utils::floats::Float,
 };
+
+macro_rules! shrinkable_children {
+    ($self:expr) => {
+        $self.children.nodes().filter(|c| c.shrinkable)
+    };
+}
+
+macro_rules! growable_children_w {
+    ($self:expr) => {
+        $self.children.nodes().filter(|c| c.growable_width)
+    };
+}
+
+macro_rules! growable_children_h {
+    ($self:expr) => {
+        $self.children.nodes().filter(|c| c.growable_height)
+    };
+}
+
+macro_rules! biggest_widths {
+    ($children:expr) => {{
+        let mut biggest = 0.0;
+        let mut second_biggest = 0.0;
+        for node in $children {
+            if node.current_width > biggest {
+                second_biggest = biggest;
+                biggest = node.current_width;
+            } else if node.current_width > second_biggest && node.current_width < biggest {
+                second_biggest = node.current_width;
+            }
+        }
+        (biggest, second_biggest)
+    }};
+}
+
+macro_rules! smallest_widths {
+    ($children:expr) => {{
+        let mut smallest = Float::MAX;
+        let mut second_smallest = Float::MAX;
+        for node in $children {
+            if node.current_width < smallest {
+                second_smallest = smallest;
+                smallest = node.current_width;
+            } else if node.current_width < second_smallest && node.current_width > smallest {
+                second_smallest = node.current_width;
+            }
+        }
+        (smallest, second_smallest)
+    }};
+}
+
+macro_rules! smallest_heights {
+    ($children:expr) => {{
+        let mut smallest = Float::MAX;
+        let mut second_smallest = Float::MAX;
+        for node in $children {
+            if node.current_height < smallest {
+                second_smallest = smallest;
+                smallest = node.current_height;
+            } else if node.current_height < second_smallest && node.current_height > smallest {
+                second_smallest = node.current_height;
+            }
+        }
+        (smallest, second_smallest)
+    }};
+}
+
+macro_rules! modifying {
+    ($children:expr, $extreme:expr, width) => {
+        $children.filter(|c| c.current_width == $extreme)
+    };
+    ($children:expr, $extreme:expr, height) => {
+        $children.filter(|c| c.current_height == $extreme)
+    };
+}
 
 pub(crate) struct FlexBox<'frame, Color, CustomData>
 where
@@ -61,72 +136,55 @@ where
             let mut remaining =
                 current_width - self.style.padding.x() - cum_width - self.get_cumulative_gaps();
 
-            let shrinking = remaining < 0.0;
-
-            // create a list of children that will be subject to shrinking/growing
-            let mut modifiable_children = if shrinking {
-                self.children.get_shrinkable_children()
-            } else {
-                self.children.get_growable_children_w()
-            };
-
-            while remaining.abs() > 1.0 && !modifiable_children.is_empty() {
-                let mut total_change = 0.0;
-                // Get the current extreme widths
-                // the extreme is the starting point for the growth/shrinking, the second extreme is the stopping point for this iteration
-                let (extreme, second_extreme) = if shrinking {
-                    KaolinNodes::get_biggest_widths(&modifiable_children)
-                } else {
-                    KaolinNodes::get_smallest_widths(&modifiable_children)
-                };
-
-                let modifying =
-                    |c: &&mut &mut KaolinNode<Color, CustomData>| c.current_width == extreme;
-
-                //  total factor for dividing the available space
-                let total_factor = if shrinking {
-                    modifiable_children.iter_mut().filter(modifying).count() as Float
-                } else {
-                    modifiable_children
-                        .iter_mut()
-                        .filter(modifying)
-                        .map(|c| c.get_grow_factor().0)
-                        .sum::<Float>()
-                };
-
-                if total_factor <= 0.0 {
-                    break; // avoid infinite loops, means no progress can be made
-                }
-
-                // calculate the base change amount for each child
-                let change_amount = min_by(remaining, second_extreme - extreme, |a, b| {
-                    a.abs()
-                        .partial_cmp(&b.abs())
-                        .expect("None in partial comparison when growing child width")
-                }) / total_factor;
-
-                for child in modifiable_children.iter_mut().filter(modifying) {
-                    // how much of the base change amount should this child get?
-                    let factor = if shrinking {
-                        1.0
-                    } else {
-                        child.get_grow_factor().0
-                    };
-                    // grow the child to the new width
-                    let change = child.grow_width(change_amount * factor);
-                    total_change += change; // keep track of the total change
-                }
-
-                // remove the amount we changed from the remaining space
-                remaining -= total_change;
-                // retain only the children that can still be modified
-                modifiable_children.retain(|c| {
-                    if shrinking {
-                        c.shrinkable
-                    } else {
-                        c.growable_width
+            if remaining < 0.0 {
+                // Shrinking
+                while remaining < -1.0 && shrinkable_children!(self).count() > 0 {
+                    let mut total_change = 0.0;
+                    //  total factor for dividing the available space
+                    let (extreme, second_extreme) = biggest_widths!(shrinkable_children!(self));
+                    let total_factor =
+                        modifying!(shrinkable_children!(self), extreme, width).count() as Float;
+                    if total_factor <= 0.0 {
+                        break; // avoid infinite loops, means no progress can be made
                     }
-                });
+
+                    // calculate the base change amount for each child
+                    let change_amount = remaining.max(second_extreme - extreme) / total_factor;
+                    for child in modifying!(shrinkable_children!(self), extreme, width) {
+                        // grow the child to the new width
+                        let change = child.grow_width(change_amount);
+                        total_change += change; // keep track of the total change
+                    }
+
+                    // remove the amount we changed from the remaining space
+                    remaining -= total_change;
+                }
+            } else {
+                // Growing
+                while remaining > 1.0 && growable_children_w!(self).count() > 0 {
+                    let mut total_change = 0.0;
+                    let (extreme, second_extreme) = smallest_widths!(growable_children_w!(self));
+
+                    //  total factor for dividing the available space
+                    let total_factor = modifying!(growable_children_w!(self), extreme, width)
+                        .map(|c| c.get_grow_factor().0)
+                        .sum::<Float>();
+
+                    if total_factor <= 0.0 {
+                        break; // avoid infinite loops, means no progress can be made
+                    }
+
+                    // calculate the base change amount for each child
+                    let change_amount = remaining.min(second_extreme - extreme) / total_factor;
+                    for child in modifying!(growable_children_w!(self), extreme, width) {
+                        // grow the child to the new width
+                        let change = child.grow_width(change_amount * child.get_grow_factor().0);
+                        total_change += change; // keep track of the total change
+                    }
+
+                    // remove the amount we changed from the remaining space
+                    remaining -= total_change;
+                }
             }
         } else {
             // in cross axis, the growth is done individually for each child instead of sequentially
@@ -158,25 +216,16 @@ where
             let cum_height = self.children.get_cumulative_height(); // lmao
             let mut remaining =
                 current_height - self.style.padding.y() - cum_height - self.get_cumulative_gaps();
-            let mut growable_children = self.children.get_growable_children_h();
 
-            while remaining > 0.0 && !growable_children.is_empty() {
+            while remaining > 0.0 && growable_children_h!(self).count() > 0 {
                 let mut total_growth = 0.0;
-                let (smallest, second_smallest) =
-                    KaolinNodes::get_smallest_heights(&growable_children);
-
-                let growing = |c: &&mut &mut KaolinNode<'frame, Color, CustomData>| {
-                    c.current_height == smallest
-                };
-
-                let total_factor = growable_children
-                    .iter_mut()
-                    .filter(growing)
+                let (extreme, second_extreme) = smallest_heights!(growable_children_h!(self));
+                let total_factor = modifying!(growable_children_h!(self), extreme, height)
                     .map(|c| c.get_grow_factor().1)
                     .sum::<Float>();
                 if total_factor > 0.0 {
-                    let grow_amount = remaining.min(second_smallest - smallest) / total_factor;
-                    for child in growable_children.iter_mut().filter(growing) {
+                    let grow_amount = remaining.min(second_extreme - extreme) / total_factor;
+                    for child in modifying!(growable_children_h!(self), extreme, height) {
                         let factor = child.get_grow_factor().1;
                         let grow = child.grow_height(grow_amount * factor);
                         total_growth += grow;
@@ -185,7 +234,6 @@ where
                     break; // avoid infinite loop
                 }
                 remaining -= total_growth;
-                growable_children.retain(|c| c.growable_height);
             }
         }
         self.children.do_grow_height();

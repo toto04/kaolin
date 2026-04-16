@@ -2,7 +2,8 @@
 //! Definitions of the rendering commands that will be used to draw the UI elements.
 //! Those should be used as a reference for implementing custom renderers.
 
-use alloc::{collections::VecDeque, string::String};
+use alloc::{boxed::Box, string::String};
+use ouroboros::self_referencing;
 
 use crate::{elements::flexbox::FlexBox, style::border, utils::floats::Float};
 
@@ -130,45 +131,59 @@ where
     }
 }
 
+#[self_referencing]
+struct RenderCommandsInner<'a, Color, CustomData>
+where
+    Color: Default + Copy + PartialEq + crate::style::KaolinColor + 'a,
+    CustomData: 'a,
+{
+    root: FlexBox<'a, Color, CustomData>,
+    #[borrows(root)]
+    #[covariant]
+    iter: Box<dyn Iterator<Item = RenderCommand<Color, CustomData>> + 'this>,
+}
+
 /// Represents a series of rendering commands.
 ///
 /// This struct implements an iterator of the render commands, which should be processed in order.
-#[derive(Debug, Clone, PartialEq)]
-pub struct RenderCommands<Color, CustomData>
+pub struct RenderCommands<'a, Color, CustomData>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
-    commands: VecDeque<RenderCommand<Color, CustomData>>,
+    inner: RenderCommandsInner<'a, Color, CustomData>,
 }
 
-impl<Color, CustomData> RenderCommands<Color, CustomData>
+impl<'a, Color, CustomData> RenderCommands<'a, Color, CustomData>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     /// Creates a new set of render commands from a root layout.
-    pub(crate) fn new(root: FlexBox<Color, CustomData>) -> Self {
-        let children = root.children;
+    pub(crate) fn new(root: FlexBox<'a, Color, CustomData>) -> Self {
         RenderCommands {
-            commands: children.render_nodes().collect::<VecDeque<_>>(),
+            inner: RenderCommandsInnerBuilder {
+                root,
+                iter_builder: |root| Box::new(root.children.render_nodes()),
+            }
+            .build(),
         }
     }
 
     pub fn is_empty(&self) -> bool {
-        self.commands.is_empty()
+        self.inner.borrow_iter().size_hint().0 == 0
     }
 
     pub fn len(&self) -> usize {
-        self.commands.len()
+        self.inner.borrow_iter().size_hint().0
     }
 }
 
-impl<Color, CustomData> Iterator for RenderCommands<Color, CustomData>
+impl<'a, Color, CustomData> Iterator for RenderCommands<'a, Color, CustomData>
 where
     Color: Default + Copy + PartialEq + crate::style::KaolinColor,
 {
     type Item = RenderCommand<Color, CustomData>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.commands.pop_front()
+        self.inner.with_iter_mut(|iter| iter.next())
     }
 }

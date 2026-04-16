@@ -69,7 +69,7 @@ where
         drawing_fn: impl FnOnce(
             scope::KaolinScope<'frame, Color, CustomData>,
         ) -> scope::KaolinScope<'frame, Color, CustomData>,
-    ) -> RenderCommands<Color, CustomData> {
+    ) -> RenderCommands<'frame, Color, CustomData> {
         let flex = FlexBox::<Color, CustomData>::new(FlexStyle::default().sizing(sizing! {
             width: fixed!(self.width),
             height: fixed!(self.height),

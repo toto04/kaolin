@@ -3,7 +3,7 @@ extern crate test;
 
 use kaolin::{
     Kaolin, fit, fixed, grow, sizing,
-    style::{FlexStyle, TextStyle},
+    style::{FlexStyle, TextStyle, layout::Layout, padding::Padding},
 };
 use test::{Bencher, black_box};
 
@@ -25,6 +25,53 @@ fn bench_text_wrapping(b: &mut Bencher) {
             .styled(FlexStyle::new().sizing(sizing!(grow!(2.0))), |k| {
                 k.text("This is a long text that should wrap", TextStyle::new())
             })
+            .styled(
+                FlexStyle::new()
+                    .padding(Padding::all(16.0))
+                    .sizing(sizing!(grow!(1.0))),
+                |k| {
+                    k.styled(FlexStyle::new().sizing(sizing!(fixed!(100.0))), |k| k)
+                        .styled(
+                            FlexStyle::new()
+                                .sizing(sizing!(grow!()))
+                                .layout(
+                                    Layout::new()
+                                        .alignment(kaolin::style::layout::Alignment::Center)
+                                        .justification(
+                                            kaolin::style::layout::Justification::Center,
+                                        ),
+                                )
+                                .padding(Padding::all(2.0)),
+                            |k| k.text("This is a long text that should wrap", TextStyle::new()),
+                        )
+                        .styled(
+                            FlexStyle::new()
+                                .sizing(sizing!(grow!()))
+                                .layout(
+                                    Layout::new()
+                                        .alignment(kaolin::style::layout::Alignment::Center)
+                                        .justification(
+                                            kaolin::style::layout::Justification::Center,
+                                        ),
+                                )
+                                .padding(Padding::all(2.0)),
+                            |k| k.text("This is a long text that should wrap", TextStyle::new()),
+                        )
+                        .styled(
+                            FlexStyle::new()
+                                .sizing(sizing!(grow!()))
+                                .layout(
+                                    Layout::new()
+                                        .alignment(kaolin::style::layout::Alignment::Center)
+                                        .justification(
+                                            kaolin::style::layout::Justification::Center,
+                                        ),
+                                )
+                                .padding(Padding::all(2.0)),
+                            |k| k.text("This is a long text that should wrap", TextStyle::new()),
+                        )
+                },
+            )
         });
         black_box(commands.collect::<Vec<_>>());
     });
@@ -35,7 +82,12 @@ mod clay_bench {
     extern crate test;
     use test::{Bencher, black_box};
 
-    use clay_layout::{Clay, Declaration, fixed, grow, math::Dimensions, text::TextConfig};
+    use clay_layout::{
+        Clay, Declaration, fixed, grow,
+        layout::{Alignment, Padding},
+        math::Dimensions,
+        text::TextConfig,
+    };
 
     pub fn measure_text(text: &str, _config: &TextConfig) -> Dimensions {
         (text.len() as f32 * 10.0, 20.0).into()
@@ -82,6 +134,74 @@ mod clay_bench {
                         "This is a long text that should wrap",
                         TextConfig::new().end(),
                     )
+                },
+            );
+            clay.with(
+                Declaration::new()
+                    .layout()
+                    .padding(Padding::all(16))
+                    .width(grow!(1.0))
+                    .height(grow!(1.0))
+                    .end(),
+                |c| {
+                    c.with(
+                        Declaration::new().layout().width(fixed!(100.0)).end(),
+                        |_| (),
+                    );
+                    c.with(
+                        Declaration::new()
+                            .layout()
+                            .width(grow!())
+                            .height(grow!())
+                            .child_alignment(Alignment::new(
+                                clay_layout::layout::LayoutAlignmentX::Center,
+                                clay_layout::layout::LayoutAlignmentY::Center,
+                            ))
+                            .padding(Padding::all(2))
+                            .end(),
+                        |c| {
+                            c.text(
+                                "This is a long text that should wrap",
+                                TextConfig::new().end(),
+                            )
+                        },
+                    );
+                    c.with(
+                        Declaration::new()
+                            .layout()
+                            .width(grow!())
+                            .height(grow!())
+                            .child_alignment(Alignment::new(
+                                clay_layout::layout::LayoutAlignmentX::Center,
+                                clay_layout::layout::LayoutAlignmentY::Center,
+                            ))
+                            .padding(Padding::all(2))
+                            .end(),
+                        |c| {
+                            c.text(
+                                "This is a long text that should wrap",
+                                TextConfig::new().end(),
+                            )
+                        },
+                    );
+                    c.with(
+                        Declaration::new()
+                            .layout()
+                            .width(grow!())
+                            .height(grow!())
+                            .child_alignment(Alignment::new(
+                                clay_layout::layout::LayoutAlignmentX::Center,
+                                clay_layout::layout::LayoutAlignmentY::Center,
+                            ))
+                            .padding(Padding::all(2))
+                            .end(),
+                        |c| {
+                            c.text(
+                                "This is a long text that should wrap",
+                                TextConfig::new().end(),
+                            )
+                        },
+                    );
                 },
             );
 
